@@ -4,15 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "rule_templates")
+@Table(name = "rule_templates",  schema = "public")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RuleTemplate {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Id
-    private Integer id;
+public class RuleTemplate extends BaseEntity{
     private String ruleCode;
     private String ruleName;
     private String description;
