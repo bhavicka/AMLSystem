@@ -1,7 +1,8 @@
 package com.tss.AmlSystem.entity.tenant;
 
-import com.tss.AmlSystem.entity.enums.AccountStatus;
-import com.tss.AmlSystem.entity.enums.AccountType;
+import com.tss.AmlSystem.entity.BaseEntity;
+import com.tss.AmlSystem.entity.enums.tenant.AccountStatus;
+import com.tss.AmlSystem.entity.enums.tenant.AccountType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

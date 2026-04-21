@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.entity.tenant;
 
+import com.tss.AmlSystem.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

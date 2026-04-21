@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.entity.tenant;
 
-import com.tss.AmlSystem.entity.enums.TenantUserRole;
+import com.tss.AmlSystem.entity.BaseEntity;
+import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
 import com.tss.AmlSystem.entity.master.UserCredential;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

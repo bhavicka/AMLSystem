@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.entity.tenant;
 
-import com.tss.AmlSystem.entity.enums.OccupationType;
+import com.tss.AmlSystem.entity.BaseEntity;
+import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
 import com.tss.AmlSystem.entity.enums.Severity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

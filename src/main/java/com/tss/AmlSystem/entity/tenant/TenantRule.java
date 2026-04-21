@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.entity.tenant;
 
+import com.tss.AmlSystem.entity.BaseEntity;
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.master.RuleTemplate;
 import jakarta.persistence.*;

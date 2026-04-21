@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.entity.tenant;
 
+import com.tss.AmlSystem.entity.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.*;

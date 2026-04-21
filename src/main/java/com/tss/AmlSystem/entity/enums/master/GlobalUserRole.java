@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity.enums;
+package com.tss.AmlSystem.entity.enums.master;
 
 public enum GlobalUserRole {
     COMPLIANCE_OFFICER,

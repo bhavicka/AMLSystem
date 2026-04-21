@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity.tenant;
+package com.tss.AmlSystem.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

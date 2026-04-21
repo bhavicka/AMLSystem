@@ -5,6 +5,7 @@ import com.tss.AmlSystem.entity.tenant.TenantRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
            WHERE t.accountNumber = :accountNumber
              AND a.tenantRule = :tenantRule
              AND a.createdAt > :since
-             AND a.status = com.tss.AmlSystem.entity.enums.AlertStatus.NEW
+             AND a.status = com.tss.AmlSystem.entity.enums.tenant.AlertStatus.NEW
            """)
     boolean existsByAccountNumberAndTenantRuleAndGeneratedAtAfter(
             @Param("accountNumber") String accountNumber,

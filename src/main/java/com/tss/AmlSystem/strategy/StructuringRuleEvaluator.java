@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.strategy;
 
-import com.tss.AmlSystem.entity.enums.AlertStatus;
+import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
@@ -95,7 +95,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             boolean alreadyAlerted = alertRepository
                     .existsByAccountNumberAndTenantRuleAndGeneratedAtAfter(
                             accountNumber,
-                            ruleContext.getTenantRule().getId(),
+                            ruleContext.getTenantRule(),
                             effectiveStart
                     );
 

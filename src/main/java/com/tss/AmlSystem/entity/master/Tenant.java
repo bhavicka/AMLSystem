@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.entity.master;
 
-import com.tss.AmlSystem.entity.tenant.BaseEntity;
+import com.tss.AmlSystem.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

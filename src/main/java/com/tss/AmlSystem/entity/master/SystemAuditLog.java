@@ -1,7 +1,7 @@
 package com.tss.AmlSystem.entity.master;
 
-import com.tss.AmlSystem.entity.enums.AuditActionType;
-import com.tss.AmlSystem.entity.enums.GlobalUserRole;
+import com.tss.AmlSystem.entity.enums.master.AuditActionType;
+import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

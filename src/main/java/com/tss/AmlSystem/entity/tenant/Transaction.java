@@ -1,7 +1,8 @@
 package com.tss.AmlSystem.entity.tenant;
 
-import com.tss.AmlSystem.entity.enums.TransactionMode;
-import com.tss.AmlSystem.entity.enums.TransactionType;
+import com.tss.AmlSystem.entity.BaseEntity;
+import com.tss.AmlSystem.entity.enums.tenant.TransactionMode;
+import com.tss.AmlSystem.entity.enums.tenant.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
