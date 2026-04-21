@@ -24,7 +24,7 @@ public class SystemUser extends BaseEntity{
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private SystemUserRole role;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
     @ColumnDefault("TRUE")

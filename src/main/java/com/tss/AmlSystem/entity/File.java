@@ -10,19 +10,21 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
-@Table(name = "transaction_batches")
+@Table(name = "files")
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransactionBatch extends BaseEntity{
-    @ManyToOne
-    @JoinColumn(name = "uploaded_by")
-    private User uploadedBy;
+public class File extends BaseEntity{
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batch_id", nullable = false)
+    private Batch batch;
     @Column(nullable = false)
     private String fileName;
     private String fileStoragePath;
+    @Column(nullable = false)
+    private Long fileSizeBytes;
     @Column(nullable = false)
     private Integer totalRecords;
     @Column(nullable = false)
@@ -30,4 +32,7 @@ public class TransactionBatch extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private BatchStatus status = BatchStatus.UPLOADED;
     private LocalDateTime processedAt;
+    @Column(nullable = false)
+    @ColumnDefault("FALSE")
+    private Boolean isRemoved = false;
 }

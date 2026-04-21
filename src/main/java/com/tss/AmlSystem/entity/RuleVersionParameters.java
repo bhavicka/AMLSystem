@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RuleVersionParameters extends BaseEntity{
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_param_id")
     private RuleParameter ruleParameter;
     @Column(nullable = false)
@@ -22,7 +22,7 @@ public class RuleVersionParameters extends BaseEntity{
     private String oldParamValue;
     @Column(nullable = false)
     private String newParamValue;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by")
     private User changedBy;
 }

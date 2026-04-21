@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends BaseEntity{
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "system_user_id")
     private SystemUser systemUser;
     @Column(nullable = false)
@@ -29,7 +29,7 @@ public class User extends BaseEntity{
     private String employeeCode;
     @Column(nullable = false)
     private TenantUserRole userRole;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private SystemUser createdBy;
     @UpdateTimestamp
