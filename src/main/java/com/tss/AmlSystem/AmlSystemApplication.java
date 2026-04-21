@@ -12,9 +12,6 @@ public class AmlSystemApplication {
 		System.setProperty("DB_URL", dotenv.get("DB_URL"));
 		System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
 		System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
-
-		System.setProperty("EMAIL", dotenv.get("EMAIL"));
-		System.setProperty("EMAIL_APP_PASSWORD", dotenv.get("EMAIL_APP_PASSWORD"));
 		SpringApplication.run(AmlSystemApplication.class, args);
 	}
 
