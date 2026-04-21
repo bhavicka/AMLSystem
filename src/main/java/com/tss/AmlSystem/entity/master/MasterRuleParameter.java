@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity.global;
+package com.tss.AmlSystem.entity.master;
 
 import com.tss.AmlSystem.entity.tenant.BaseEntity;
 import jakarta.persistence.*;
@@ -8,20 +8,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "rule_template_parameters",  schema = "public")
+@Table(name = "master_rule_parameters",  schema = "public")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RuleTemplateParameters extends BaseEntity {
-
+public class MasterRuleParameter extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_id",nullable = false)
     private RuleTemplate ruleTemplate;
-
+    @Column(name = "param_key")
     private String paramKey;
+    @Column(name = "param_value")
     private String paramValue;
-
+    @Column(name = "min_value")
     private String minValue;
+    @Column(name = "max_value")
     private String maxValue;
 }

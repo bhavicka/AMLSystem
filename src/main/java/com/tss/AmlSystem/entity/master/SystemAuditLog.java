@@ -1,7 +1,7 @@
-package com.tss.AmlSystem.entity.global;
+package com.tss.AmlSystem.entity.master;
 
 import com.tss.AmlSystem.entity.enums.AuditActionType;
-import com.tss.AmlSystem.entity.enums.SystemUserRole;
+import com.tss.AmlSystem.entity.enums.GlobalUserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,22 +20,25 @@ import java.time.LocalDateTime;
 public class SystemAuditLog{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "actor_id")
-    private SystemUser user;
-    private SystemUserRole actorRole;
+    private UserCredential user;
+    @Column(name = "actor_role")
+    private GlobalUserRole actorRole;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
-    @Column(nullable = false)
+    @Column(nullable = false, name = "action_type")
     @Enumerated(EnumType.STRING)
     private AuditActionType actionType;
+    @Column(name = "affected_record_id")
     private Long affectedRecordId;
+    @Column(name = "affected_record_table_name")
     private String affectedRecordTableName;
-    @Column(nullable = false)
+    @Column(nullable = false, name = "ip_address")
     private String ipAddress;
     @CreatedDate
-    @Column(nullable = false)
+    @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt;
 }

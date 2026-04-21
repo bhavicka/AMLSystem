@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.entity.enums;
 
-public enum SystemUserRole {
+public enum GlobalUserRole {
     COMPLIANCE_OFFICER,
     BANK_ADMIN,
     SYSTEM_ADMIN

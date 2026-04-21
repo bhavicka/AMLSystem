@@ -18,32 +18,47 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Customer extends BaseEntity {
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "client_number")
     private String clientNumber;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "first_name")
     private String firstName;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "last_name")
     private String lastName;
+
+    @Column(name = "middle_name")
     private String middleName;
-    @Column(nullable = false, unique = true)
+
+    @Column(nullable = false, unique = true, name = "aadhar_number")
     private String aadharNumber;
-    @Column(nullable = false, unique = true)
+
+    @Column(nullable = false, unique = true, name = "pan")
     private String pan;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "occupation")
     private String occupation;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "occupation_type")
     @Enumerated(EnumType.STRING)
     private OccupationType occupationType;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "is_pep")
     private Boolean isPep;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "risk_rate")
     private Severity riskRate;
-    @Column(nullable = false, precision = 19, scale = 2)
+
+    @Column(nullable = false, precision = 19, scale = 2, name = "monthly_income")
     private BigDecimal monthlyIncome;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "dob")
     private LocalDate dob;
-    @Column(precision = 5, scale = 2)
+
+    @Column(precision = 5, scale = 2, name = "profession_multiplier")
     private BigDecimal professionMultiplier;
+
+    @Column(name = "family_code")
     private String familyCode;
 }

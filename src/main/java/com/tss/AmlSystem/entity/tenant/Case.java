@@ -16,17 +16,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Case extends BaseEntity {
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, name = "case_reference_number")
     private String caseReferenceNumber;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CaseStatus status = CaseStatus.OPEN;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")
-    private User assignedTo;
+    private TenantUser assignedTo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_by")
-    private User assignedBy;
+    private TenantUser assignedBy;
+
+    @Column(name = "closed_at")
     private LocalDateTime closedAt;
+
     private String notes;
 }

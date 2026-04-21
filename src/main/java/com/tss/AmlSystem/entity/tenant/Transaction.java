@@ -11,7 +11,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Table(name = "transactions",schema = "sbi_1776780613098")
+@Table(name = "transactions")
 @Entity
 @Getter
 @Setter
@@ -21,21 +21,31 @@ public class Transaction extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false)
     private Batch batch;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id", nullable = false)
     private File file;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "account_number")
     private String accountNumber;
+
+    @Column(name = "counter_party_account_number")
     private String counterPartyAccountNumber;
+
+    @Column(name = "transaction_date")
     private LocalDate transactionDate;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "transaction_type")
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "transaction_mode")
     @Enumerated(EnumType.STRING)
     private TransactionMode transactionMode;
+
     @Column(nullable = false)
     private BigDecimal amount;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "transaction_reference_number")
     private String transactionReferenceNumber;
 }

@@ -15,14 +15,17 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Account extends BaseEntity {
-    @Column(nullable = false)
+    @Column(nullable = false, name = "client_number")
     private String clientNumber;
-    @Column(nullable = false, unique = true )
+
+    @Column(nullable = false, unique = true, name = "account_number")
     private String accountNumber;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "account_type")
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "account_status")
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;
 }

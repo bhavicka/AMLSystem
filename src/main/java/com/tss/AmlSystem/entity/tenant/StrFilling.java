@@ -16,12 +16,17 @@ public class StrFilling extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "case_id", nullable = false, unique = true)
     private Case aCase;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "filed_by", nullable = false)
-    private User filedBy;
+    private TenantUser filedBy;
+
+    @Column(name = "supporting_notes")
     private String supportingNotes;
-    @Column(unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false, name = "reference_number")
     private String referenceNumber;
-    @Column(unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false, name = "pdf_storage_path")
     private String pdfStoragePath;
 }

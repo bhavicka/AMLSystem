@@ -15,5 +15,5 @@ import lombok.Setter;
 public class Batch extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by")
-    private User uploadedBy;
+    private TenantUser uploadedBy;
 }

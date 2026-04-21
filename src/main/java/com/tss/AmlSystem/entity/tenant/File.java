@@ -20,19 +20,28 @@ public class File extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false)
     private Batch batch;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "file_name")
     private String fileName;
+
+    @Column(name = "file_storage_path")
     private String fileStoragePath;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "file_size_bytes")
     private Long fileSizeBytes;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "total_records")
     private Integer totalRecords;
+
     @Column(nullable = false)
     @ColumnDefault("uploaded")
     @Enumerated(EnumType.STRING)
     private BatchStatus status = BatchStatus.UPLOADED;
+
+    @Column(name = "processed_at")
     private LocalDateTime processedAt;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "is_removed")
     @ColumnDefault("FALSE")
     private Boolean isRemoved = false;
 }

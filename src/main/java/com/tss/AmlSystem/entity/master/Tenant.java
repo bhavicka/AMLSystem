@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity.global;
+package com.tss.AmlSystem.entity.master;
 
 import com.tss.AmlSystem.entity.tenant.BaseEntity;
 import jakarta.persistence.Column;
@@ -19,16 +19,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Tenant extends BaseEntity {
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "bank_name")
     private String bankName;
     @Column(unique = true, nullable = false)
     private String ifsc;
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "contact_email")
     private String contactEmail;
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "schema_name")
     private String schemaName;
     @ColumnDefault("TRUE")
-    @Column(nullable = false)
+    @Column(nullable = false, name = "is_active")
     private Boolean isActive = true;
+    @Column(name = "deactivated_at")
     private LocalDateTime deactivatedAt;
 }

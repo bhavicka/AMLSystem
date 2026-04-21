@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity.global;
+package com.tss.AmlSystem.entity.master;
 
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.tenant.BaseEntity;
@@ -12,10 +12,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RuleTemplate extends BaseEntity {
+    @Column(name = "rule_code", unique = true, nullable = false)
     private String ruleCode;
+    @Column(name = "rule_name", unique = true, nullable = false)
     private String ruleName;
+    @Column(name = "description", nullable = false)
     private String description;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "severity_rate")
     private Severity severityRate;
 }

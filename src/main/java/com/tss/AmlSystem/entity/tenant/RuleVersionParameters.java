@@ -13,14 +13,18 @@ import lombok.*;
 public class RuleVersionParameters extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_param_id")
-    private RuleParameter ruleParameter;
-    @Column(nullable = false)
+    private TenantRuleParameter ruleParameter;
+
+    @Column(nullable = false, name = "param_key")
     private String paramKey;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "old_param_value")
     private String oldParamValue;
-    @Column(nullable = false)
+
+    @Column(nullable = false, name = "new_param_value")
     private String newParamValue;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by")
-    private User changedBy;
+    private TenantUser changedBy;
 }
