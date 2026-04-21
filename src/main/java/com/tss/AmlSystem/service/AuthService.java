@@ -47,6 +47,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
+    private final TenantSchemaService tenantSchemaService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(6);
 
@@ -64,6 +65,8 @@ public class AuthService {
         user.setSystemUser(systemUser);
         user.setUserRole(TenantUserRole.BANK_ADMIN);
         user.setCreatedBy(systemUserRepository.findById(SecurityUtils.getCurrentUser().orElseThrow().getId()).orElseThrow());
+
+        tenantSchemaService.createSchema(tenant.getSchemaName());
         return "Tenant created";
     }
 
