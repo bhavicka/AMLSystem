@@ -1,10 +1,8 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Table(name = "users")
 @Entity
@@ -12,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RuleVersionParameters extends BaseEntity{
+public class RuleVersionParameters extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_param_id")
     private RuleParameter ruleParameter;

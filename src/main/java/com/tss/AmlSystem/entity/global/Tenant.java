@@ -1,5 +1,6 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.global;
 
+import com.tss.AmlSystem.entity.tenant.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Tenant extends BaseEntity{
+public class Tenant extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String bankName;
     @Column(unique = true, nullable = false)

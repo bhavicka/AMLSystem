@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.AccountStatus;
 import com.tss.AmlSystem.entity.enums.AccountType;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Account extends BaseEntity{
+public class Account extends BaseEntity {
     @Column(nullable = false)
     private String clientNumber;
     @Column(nullable = false, unique = true )

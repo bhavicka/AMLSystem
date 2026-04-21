@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileValidationErrors extends BaseEntity{
+public class FileValidationErrors extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id", nullable = false)
     private File file;

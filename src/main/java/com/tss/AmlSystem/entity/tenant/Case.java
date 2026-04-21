@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.CaseStatus;
 import jakarta.persistence.*;
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Case extends BaseEntity{
+public class Case extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String caseReferenceNumber;
     @Column(nullable = false)

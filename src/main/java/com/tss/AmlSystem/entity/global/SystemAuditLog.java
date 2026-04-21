@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.global;
 
 import com.tss.AmlSystem.entity.enums.AuditActionType;
 import com.tss.AmlSystem.entity.enums.SystemUserRole;

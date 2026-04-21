@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.NotificationType;
 import jakarta.persistence.*;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Notification extends BaseEntity{
+public class Notification extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

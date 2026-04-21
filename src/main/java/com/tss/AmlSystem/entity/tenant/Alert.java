@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.AlertStatus;
 import jakarta.persistence.*;
@@ -9,13 +9,13 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Table(name = "alerts")
+@Table(name = "alerts",schema = "sbi_1776780613098")
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Alert extends BaseEntity{
+public class Alert extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_id")
     private TenantRule tenantRule;

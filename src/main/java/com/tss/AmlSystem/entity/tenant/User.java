@@ -1,6 +1,7 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.TenantUserRole;
+import com.tss.AmlSystem.entity.global.SystemUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class User extends BaseEntity{
+public class User extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "system_user_id")
     private SystemUser systemUser;

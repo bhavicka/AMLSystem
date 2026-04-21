@@ -1,6 +1,7 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.global;
 
 import com.tss.AmlSystem.entity.enums.SystemUserRole;
+import com.tss.AmlSystem.entity.tenant.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SystemUser extends BaseEntity{
+public class SystemUser extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)

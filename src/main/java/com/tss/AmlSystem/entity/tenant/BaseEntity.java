@@ -1,8 +1,6 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
@@ -16,7 +14,8 @@ public abstract class BaseEntity {
     @Id
     private Long id;
     @CreatedDate
-    @Column(updatable = false, nullable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
+    @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 }

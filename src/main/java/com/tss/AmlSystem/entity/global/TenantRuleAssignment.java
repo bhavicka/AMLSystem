@@ -1,6 +1,6 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.global;
 
-import jakarta.annotation.Nullable;
+import com.tss.AmlSystem.entity.tenant.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TenantRuleAssignment extends BaseEntity{
+public class TenantRuleAssignment extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;

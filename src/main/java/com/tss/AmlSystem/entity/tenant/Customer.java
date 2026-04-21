@@ -1,19 +1,15 @@
-package com.tss.AmlSystem.entity;
+package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.enums.OccupationType;
+import com.tss.AmlSystem.entity.enums.Severity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.grammars.hql.HqlParser;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Table(name = "customers")
 @Entity
@@ -21,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Customer extends BaseEntity{
+public class Customer extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String clientNumber;
     @Column(nullable = false)
@@ -40,9 +36,9 @@ public class Customer extends BaseEntity{
     private OccupationType occupationType;
     @Column(nullable = false)
     private Boolean isPep;
-    @Min(value = 1)
-    @Max(value = 10)
-    private Integer riskRate;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Severity riskRate;
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal monthlyIncome;
     @Column(nullable = false)
