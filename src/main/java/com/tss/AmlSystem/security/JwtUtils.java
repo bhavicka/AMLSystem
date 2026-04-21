@@ -24,12 +24,11 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // This creates the token after a successful login
     public String generateJwtToken(String email, String bankName, String schemaName) {
         return Jwts.builder()
                 .subject(email)
                 .claim("bankName", bankName)
-                .claim("schemaName", schemaName) // Hibernate will use this
+                .claim("schemaName", schemaName)
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey())

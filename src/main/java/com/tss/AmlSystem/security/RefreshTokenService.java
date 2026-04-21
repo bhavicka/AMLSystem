@@ -30,14 +30,10 @@ public class RefreshTokenService {
         SystemUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Generate a random UUID as the refresh token
         String token = UUID.randomUUID().toString();
 
         user.setRefreshToken(token);
         user.setRefreshTokenExpiry(LocalDateTime.now().plus(Duration.ofMillis(refreshTokenDurationMs)));
-
-        // No need to manually call save if @Transactional is working,
-        // but good for clarity in some setups:
         userRepository.save(user);
 
         return token;
