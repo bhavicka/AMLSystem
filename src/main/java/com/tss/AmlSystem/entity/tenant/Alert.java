@@ -10,7 +10,7 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Table(name = "alerts",schema = "sbi_1776780613098")
+@Table(name = "alerts")
 @Entity
 @Getter
 @Setter
