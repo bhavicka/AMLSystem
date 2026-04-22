@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -20,8 +22,9 @@ public class Case extends BaseEntity {
     @Column(nullable = false, unique = true, name = "case_reference_number")
     private String caseReferenceNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false,name = "status",columnDefinition = "case_status")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private CaseStatus status = CaseStatus.OPEN;
 
     @ManyToOne(fetch = FetchType.LAZY)
