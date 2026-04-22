@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 
 @Table(name = "notifications")
@@ -21,7 +23,8 @@ public class Notification extends BaseEntity {
     private TenantUser user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "notification_type")
+    @Column(nullable = false, name = "notification_type",columnDefinition = "notification_type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private NotificationType notificationType;
 
     @Column(name = "related_record_id")

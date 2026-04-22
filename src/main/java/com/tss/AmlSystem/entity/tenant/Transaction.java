@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,12 +38,14 @@ public class Transaction extends BaseEntity {
     @Column(name = "transaction_date")
     private LocalDate transactionDate;
 
-    @Column(nullable = false, name = "transaction_type")
+    @Column(nullable = false, name = "transaction_type",columnDefinition = "transaction_type")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TransactionType transactionType;
 
-    @Column(nullable = false, name = "transaction_mode")
+    @Column(nullable = false, name = "transaction_mode",columnDefinition = "transaction_mode")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TransactionMode transactionMode;
 
     @Column(nullable = false)

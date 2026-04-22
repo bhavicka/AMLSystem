@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -34,9 +36,10 @@ public class File extends BaseEntity {
     @Column(nullable = false, name = "total_records")
     private Integer totalRecords;
 
-    @Column(nullable = false)
     @ColumnDefault("uploaded")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, name = "status", columnDefinition = "batch_status")
     private BatchStatus status = BatchStatus.UPLOADED;
 
     @Column(name = "processed_at")
