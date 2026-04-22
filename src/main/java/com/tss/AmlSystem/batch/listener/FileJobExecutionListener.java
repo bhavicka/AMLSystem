@@ -4,12 +4,13 @@ import com.tss.AmlSystem.entity.enums.tenant.BatchStatus;
 import com.tss.AmlSystem.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -19,30 +20,40 @@ public class FileJobExecutionListener implements JobExecutionListener {
     private final FileRepository fileRepository;
 
     @Override
-    public void afterJob(JobExecution jobExecution) {
+    public void beforeJob(JobExecution jobExecution) {
         Long fileId = jobExecution.getJobParameters().getLong("fileId");
+        if (fileId == null) {
+            return;
+        }
 
         fileRepository.findById(fileId).ifPresent(file -> {
-            // Spring Batch tracks these counts automatically
-            StepExecution step = jobExecution.getStepExecutions().iterator().next();
+            file.setStatus(BatchStatus.PROCESSING);
+            fileRepository.save(file);
+        });
+    }
 
-            long written = step.getWriteCount();  // successfully saved rows
-            long skipped = step.getProcessSkipCount(); // rows processor returned null for
+    @Override
+    public void afterJob(JobExecution jobExecution) {
+        Long fileId = jobExecution.getJobParameters().getLong("fileId");
+        if (fileId == null) {
+            return;
+        }
+
+        fileRepository.findById(fileId).ifPresent(file -> {
+            Optional<StepExecution> stepExecution = jobExecution.getStepExecutions().stream().findFirst();
+            long written = stepExecution.map(StepExecution::getWriteCount).orElse(0l);
+            long failed = stepExecution.map(step ->
+                    step.getFilterCount() + step.getReadSkipCount() + step.getProcessSkipCount() + step.getWriteSkipCount()
+            ).orElse(0l);
 
             file.setSuccessRecords((int) written);
-            file.setFailedRecords((int) skipped);  // add this field to your File entity
+            file.setFailedRecords((int) failed);
             file.setProcessedAt(LocalDateTime.now());
 
-            if (jobExecution.getStatus().equals(BatchStatus.COMPLETED) && skipped == 0) {
-                file.setStatus(BatchStatus.COMPLETED);
-            } else if (written > 0) {
-                file.setStatus(BatchStatus.PARTIALLY_COMPLETED);
-            } else {
-                file.setStatus(BatchStatus.FAILED);
-            }
+            file.setStatus(BatchStatus.COMPLETED);
 
             fileRepository.save(file);
-            log.info("File {} done — written: {}, skipped: {}", fileId, written, skipped);
+            log.info("File {} done - written: {}, failed: {}", fileId, written, failed);
         });
     }
 }

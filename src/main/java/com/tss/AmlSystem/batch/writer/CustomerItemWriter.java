@@ -15,8 +15,6 @@ public class CustomerItemWriter implements ItemWriter<Customer> {
 
     @Override
     public void write(Chunk<? extends Customer> chunk) {
-        // chunk.getItems() is a List<Customer> of size=chunkSize (1000)
-        // saveAll does a single batch INSERT — very fast
         customerRepository.saveAll(chunk.getItems());
     }
 }

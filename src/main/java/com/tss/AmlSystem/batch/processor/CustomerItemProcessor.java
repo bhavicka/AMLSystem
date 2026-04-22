@@ -6,106 +6,78 @@ import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
 import com.tss.AmlSystem.entity.tenant.Customer;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.FileValidationErrors;
-import com.tss.AmlSystem.repository.FileRepository;
-import com.tss.AmlSystem.repository.FileValidationErrorsRepository;
-import io.micrometer.common.util.StringUtils;
+import com.tss.AmlSystem.service.FileValidationService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
+import org.springframework.batch.core.listener.StepExecutionListener;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Component
-@Slf4j
 @RequiredArgsConstructor
 @StepScope
-public class CustomerItemProcessor implements ItemProcessor<CustomerDTO, Customer> {
+public class CustomerItemProcessor implements ItemProcessor<CustomerDTO, Customer>, StepExecutionListener {
 
-    private final FileValidationErrorsRepository errorRepository;
+    private final FileValidationService fileValidationService;
 
-    // fileId is injected from job parameters at runtime
-    private FileRepository fileRepository;
     private File fileEntity;
 
-    @Value("#{jobParameters['fileId']}")
-    public void setFileId(Long fileId) {
-        this.fileEntity = fileRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("File not found: " + fileId));
+    @Override
+    public void beforeStep(StepExecution stepExecution) {
+        Long fileId = stepExecution.getJobParameters().getLong("fileId");
+        this.fileEntity = fileValidationService.getFile(fileId);
     }
 
     @Override
     public Customer process(CustomerDTO dto) {
-        List<FileValidationErrors> errors = validate(dto);
+        int rowNumber = currentRowNumber();
+        List<FileValidationErrors> errors = fileValidationService.validateCustomer(dto, fileEntity, rowNumber);
 
         if (!errors.isEmpty()) {
-            errorRepository.saveAll(errors); // log to DB
-            return null; // skip this row — Spring Batch won't pass null to Writer
+            fileValidationService.saveValidationErrors(errors);
+            return null;
         }
 
-        return convertToEntity(dto); // valid → convert and send to Writer
+        return convertToEntity(dto);
     }
 
-    private List<FileValidationErrors> validate(CustomerDTO dto) {
-        List<FileValidationErrors> errors = new ArrayList<>();
-        int row = 0; // we'll handle row tracking shortly
-
-        if (StringUtils.isBlank(dto.getClientNumber()))
-            errors.add(error("client_number", "Required field missing"));
-
-        if (!dto.getAadharNumber().matches("\\d{12}"))
-            errors.add(error("aadhar_number", "Must be 12 digits"));
-
-        if (!dto.getPan().matches("[A-Z]{5}[0-9]{4}[A-Z]"))
-            errors.add(error("pan", "Invalid PAN format"));
-
-        try { OccupationType.valueOf(dto.getOccupationType()); }
-        catch (Exception e) { errors.add(error("occupation_type", "Invalid value")); }
-
-        try { Severity.valueOf(dto.getRiskRate()); }
-        catch (Exception e) { errors.add(error("risk_rate", "Invalid value")); }
-
-        try { new BigDecimal(dto.getMonthlyIncome()); }
-        catch (Exception e) { errors.add(error("monthly_income", "Invalid number")); }
-
-        try { LocalDate.parse(dto.getDob()); }
-        catch (Exception e) { errors.add(error("dob", "Invalid date, use yyyy-MM-dd")); }
-
-        return errors;
-    }
-
-    private FileValidationErrors error(String field, String message) {
-        FileValidationErrors e = new FileValidationErrors();
-        e.setFile(fileEntity);
-        e.setFieldName(field);
-        e.setErrorMessage(message);
-        return e;
+    private int currentRowNumber() {
+        StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
+        return (int)(stepExecution.getReadCount() + 1);
     }
 
     private Customer convertToEntity(CustomerDTO dto) {
-        Customer c = new Customer();
-        c.setClientNumber(dto.getClientNumber());
-        c.setFirstName(dto.getFirstName());
-        c.setLastName(dto.getLastName());
-        c.setMiddleName(dto.getMiddleName());
-        c.setAadharNumber(dto.getAadharNumber());
-        c.setPan(dto.getPan());
-        c.setOccupation(dto.getOccupation());
-        c.setOccupationType(OccupationType.valueOf(dto.getOccupationType()));
-        c.setIsPep(Boolean.parseBoolean(dto.getIsPep()));
-        c.setRiskRate(Severity.valueOf(dto.getRiskRate()));
-        c.setMonthlyIncome(new BigDecimal(dto.getMonthlyIncome()));
-        c.setDob(LocalDate.parse(dto.getDob()));
-        if (StringUtils.isNotBlank(dto.getProfessionMultiplier()))
-            c.setProfessionMultiplier(new BigDecimal(dto.getProfessionMultiplier()));
-        c.setFamilyCode(dto.getFamilyCode());
-        return c;
+        Customer customer = new Customer();
+        customer.setClientNumber(dto.getClientNumber().trim());
+        customer.setFirstName(dto.getFirstName().trim());
+        customer.setLastName(dto.getLastName().trim());
+        customer.setMiddleName(normalizeOptional(dto.getMiddleName()));
+        customer.setAadharNumber(dto.getAadharNumber().trim());
+        customer.setPan(dto.getPan().trim().toUpperCase(Locale.ROOT));
+        customer.setOccupation(dto.getOccupation().trim());
+        customer.setOccupationType(OccupationType.valueOf(dto.getOccupationType().trim().toUpperCase(Locale.ROOT)));
+        customer.setIsPep(Boolean.parseBoolean(dto.getIsPep().trim()));
+        customer.setRiskRate(Severity.valueOf(dto.getRiskRate().trim().toUpperCase(Locale.ROOT)));
+        customer.setMonthlyIncome(new BigDecimal(dto.getMonthlyIncome().trim()));
+        customer.setDob(LocalDate.parse(dto.getDob().trim()));
+
+        if (StringUtils.hasText(dto.getProfessionMultiplier())) {
+            customer.setProfessionMultiplier(new BigDecimal(dto.getProfessionMultiplier().trim()));
+        }
+
+        customer.setFamilyCode(normalizeOptional(dto.getFamilyCode()));
+        return customer;
+    }
+
+    private String normalizeOptional(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 }
