@@ -8,5 +8,5 @@ public record JwtResponse (
         String refreshToken,
         String email,
         String bankName,
-        List<String> role
+        List<String> roles
 ){}

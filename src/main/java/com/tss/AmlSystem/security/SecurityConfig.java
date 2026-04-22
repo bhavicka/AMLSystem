@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,8 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthEntryPoint unauthorizedHandler;
 
     @Bean
     public JwtFilter jwtFilter(){
@@ -38,17 +37,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**").permitAll()
-                                .anyRequest().authenticated()
-                );
-
-        // Use the injected field directly here
-        http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 }

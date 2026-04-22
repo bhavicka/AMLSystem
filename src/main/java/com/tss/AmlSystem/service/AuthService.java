@@ -13,10 +13,9 @@ import com.tss.AmlSystem.mapper.TenantUserMapper;
 import com.tss.AmlSystem.mapper.UserCredentialMapper;
 import com.tss.AmlSystem.repository.TenantRepository;
 import com.tss.AmlSystem.repository.UserCredentialRepository;
-import com.tss.AmlSystem.repository.UserRepository;
+import com.tss.AmlSystem.repository.TenantUserRepository;
 import com.tss.AmlSystem.security.JwtUtils;
 import com.tss.AmlSystem.security.RefreshTokenService;
-import com.tss.AmlSystem.security.SecurityUtils;
 import com.tss.AmlSystem.security.UserDetailsImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,7 @@ public class AuthService {
     private final UserCredentialMapper userCredentialMapper;
 
     private final TenantRepository tenantRepository;
-    private final UserRepository userRepository;
+    private final TenantUserRepository userRepository;
     private final UserCredentialRepository userCredentialRepository;
 
     private final AuthenticationManager authenticationManager;
@@ -53,17 +52,28 @@ public class AuthService {
     public String registerBank(BankRegisterDto bankRegisterDto){
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         tenant.setSchemaName(tenant.getBankName()+"_schema");
+        tenantRepository.save(tenant);
 
-        UserCredential systemUser = userCredentialMapper.toUserCredential(bankRegisterDto);
-        systemUser.setRole(GlobalUserRole.BANK_ADMIN);
-        systemUser.setTenant(tenant);
-        systemUser.setPasswordHash(passwordEncoder.encode(bankRegisterDto.password()));
+        UserCredential userCredential = userCredentialMapper.toUserCredential(bankRegisterDto);
+        userCredential.setRole(GlobalUserRole.BANK_ADMIN);
+        userCredential.setTenant(tenant);
+        userCredential.setPasswordHash(passwordEncoder.encode(bankRegisterDto.password()));
+        userCredentialRepository.save(userCredential);
 
         TenantUser user = tenantUserMapper.toTenantUser(bankRegisterDto);
-        user.setSystemUser(systemUser);
+        user.setSystemUser(userCredential);
         user.setRole(TenantUserRole.BANK_ADMIN);
-        user.setCreatedBy(userCredentialRepository.findById(SecurityUtils.getCurrentUser().orElseThrow().getId()).orElseThrow());
 
+// 1. Get the current user's email (String) directly from the Security Context
+        String currentUserEmail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+// 2. Fetch the actual UserCredential entity from the database using that email
+        UserCredential currentUser = userCredentialRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new RuntimeException("Current user not found in database"));
+
+// 3. Set the creator
+        user.setCreatedBy(currentUser);
+        userRepository.save(user);
         tenantSchemaService.createSchema(tenant.getSchemaName());
         return "Tenant created";
     }

@@ -8,7 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -16,12 +18,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
+    @Autowired
     private JwtUtils jwtUtils;
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -29,32 +31,26 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-
-                // 1. Extract the Schema Name and Username
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
                 String schemaName = jwtUtils.getSchemaFromJwtToken(jwt);
+                List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
+                List<SimpleGrantedAuthority> authorities = (roles != null) ? roles.stream()
+                        .map(role -> new SimpleGrantedAuthority(role))
+                        .toList() : List.of();
 
-                // 2. Set the TenantContext so Hibernate knows which schema to use
-                // This must happen before any DB calls
                 TenantContext.setCurrentTenant(schemaName);
-
-                // 3. Set standard Spring Security Authentication
-                // We leave authorities as null for now; we will handle Roles in Step 5
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, null);
-
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            // Silently failing as requested (no logger)
+            System.err.println(e.getMessage());
         }
 
         try {
             filterChain.doFilter(request, response);
         } finally {
-            // 4. VERY IMPORTANT: Clear the context after the request finishes.
-            // This prevents the schema name from leaking to other threads in the pool.
             TenantContext.clear();
         }
     }

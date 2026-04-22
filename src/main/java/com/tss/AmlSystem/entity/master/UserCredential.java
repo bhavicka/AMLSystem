@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -24,8 +26,9 @@ public class UserCredential extends BaseEntity {
     @Column(nullable = false, name = "password_hash")
     private String passwordHash;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "global_user_role_enum")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private GlobalUserRole role;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -56,13 +56,24 @@ public class JwtUtils {
     }
 
     public boolean validateJwtToken(String authToken) {
-        try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(authToken);
-            return true;
-        } catch (Exception ignore){}
-        return false;
+//        try {
+//
+//        } catch (Exception ignore){}
+//        return false;
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(authToken);
+        return true;
+    }
+    public List<String> getRolesFromJwtToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey()) // The same key used for signing
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        // Pull the "roles" claim we saw earlier
+        return claims.get("roles", List.class);
     }
 }

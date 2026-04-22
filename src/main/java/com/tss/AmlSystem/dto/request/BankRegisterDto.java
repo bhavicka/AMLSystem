@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.dto.request;
 
-public record BankRegisterDto (
+public record  BankRegisterDto (
         String bankName,
         String ifsc,
         String contactEmail,
