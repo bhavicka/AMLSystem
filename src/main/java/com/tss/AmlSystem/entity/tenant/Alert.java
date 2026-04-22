@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.List;
 
@@ -24,6 +26,8 @@ public class Alert extends BaseEntity {
     @JoinColumn(name = "case_id")
     private Case caseId;
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM) // This tells Hibernate to use the DB's native enum
+    @Column(name = "status", columnDefinition = "alert_status")
     private AlertStatus status;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
