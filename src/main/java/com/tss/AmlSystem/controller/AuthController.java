@@ -22,7 +22,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register/bank")
-    @PreAuthorize("hasRole('')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<String> registerBank(@RequestBody BankRegisterDto bankRegisterDto){
         return ResponseEntity.ok(authService.registerBank(bankRegisterDto));
     }

@@ -1,7 +1,7 @@
 package com.tss.AmlSystem.security;
 
-import com.tss.AmlSystem.entity.SystemUser;
-import com.tss.AmlSystem.repository.SystemUserRepository;
+import com.tss.AmlSystem.entity.master.UserCredential;
+import com.tss.AmlSystem.repository.UserCredentialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,32 +19,32 @@ public class RefreshTokenService {
     @Value("${app.jwtRefreshExpirationMs}")
     private Long refreshTokenDurationMs;
 
-    private final SystemUserRepository userRepository;
+    private final UserCredentialRepository userCredentialRepository;
 
-    public Optional<SystemUser> findByToken(String token) {
-        return userRepository.findByRefreshToken(token);
+    public Optional<UserCredential> findByToken(String token) {
+        return userCredentialRepository.findByRefreshToken(token);
     }
 
     @Transactional
     public String createRefreshToken(Long userId) {
-        SystemUser user = userRepository.findById(userId)
+        UserCredential user = userCredentialRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         String token = UUID.randomUUID().toString();
 
         user.setRefreshToken(token);
         user.setRefreshTokenExpiry(LocalDateTime.now().plus(Duration.ofMillis(refreshTokenDurationMs)));
-        userRepository.save(user);
+        userCredentialRepository.save(user);
 
         return token;
     }
 
-    public SystemUser verifyExpiration(SystemUser user) {
+    public UserCredential verifyExpiration(UserCredential user) {
         if (user.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
             // Token has expired - clear it from DB
             user.setRefreshToken(null);
             user.setRefreshTokenExpiry(null);
-            userRepository.save(user);
+            userCredentialRepository.save(user);
             throw new RuntimeException("Refresh token was expired. Please make a new login request");
         }
         return user;

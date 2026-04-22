@@ -1,7 +1,8 @@
 package com.tss.AmlSystem.security;
 
-import com.tss.AmlSystem.entity.SystemUser;
-import com.tss.AmlSystem.repository.SystemUserRepository;
+import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
+import com.tss.AmlSystem.entity.master.UserCredential;
+import com.tss.AmlSystem.repository.UserCredentialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,18 +18,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final SystemUserRepository userRepository;
+    private final UserCredentialRepository userCredentialRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // Find user in the public schema
-        SystemUser user = userRepository.findByEmail(email)
+        UserCredential user = userCredentialRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
 
+
         // Get tenant details from the linked tenant entity
-        String schemaName = user.getTenant().getSchemaName();
-        String bankName = user.getTenant().getBankName();
+        String schemaName;
+        String bankName;
+        if(user.getRole().equals(GlobalUserRole.SYSTEM_ADMIN)) {
+            schemaName = "public";
+            bankName = "";
+        }
+        else {
+            schemaName = user.getTenant().getSchemaName();
+            bankName = user.getTenant().getBankName();
+        }
 
         return new UserDetailsImpl(
                 user.getId(),

@@ -1,7 +1,7 @@
 package com.tss.AmlSystem.mapper;
 
 import com.tss.AmlSystem.dto.request.BankRegisterDto;
-import com.tss.AmlSystem.entity.Tenant;
+import com.tss.AmlSystem.entity.master.Tenant;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

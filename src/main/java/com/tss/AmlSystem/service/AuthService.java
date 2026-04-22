@@ -3,16 +3,16 @@ package com.tss.AmlSystem.service;
 import com.tss.AmlSystem.dto.request.BankRegisterDto;
 import com.tss.AmlSystem.dto.request.LoginRequest;
 import com.tss.AmlSystem.dto.response.JwtResponse;
-import com.tss.AmlSystem.entity.SystemUser;
-import com.tss.AmlSystem.entity.Tenant;
-import com.tss.AmlSystem.entity.User;
-import com.tss.AmlSystem.entity.enums.SystemUserRole;
-import com.tss.AmlSystem.entity.enums.TenantUserRole;
-import com.tss.AmlSystem.mapper.SystemUserMapper;
+import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
+import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
+import com.tss.AmlSystem.entity.master.Tenant;
+import com.tss.AmlSystem.entity.master.UserCredential;
+import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.mapper.TenantMapper;
-import com.tss.AmlSystem.mapper.UserMapper;
-import com.tss.AmlSystem.repository.SystemUserRepository;
+import com.tss.AmlSystem.mapper.TenantUserMapper;
+import com.tss.AmlSystem.mapper.UserCredentialMapper;
 import com.tss.AmlSystem.repository.TenantRepository;
+import com.tss.AmlSystem.repository.UserCredentialRepository;
 import com.tss.AmlSystem.repository.UserRepository;
 import com.tss.AmlSystem.security.JwtUtils;
 import com.tss.AmlSystem.security.RefreshTokenService;
@@ -28,21 +28,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
     private final TenantMapper tenantMapper;
-    private final UserMapper userMapper;
-    private final SystemUserMapper systemUserMapper;
+    private final TenantUserMapper tenantUserMapper;
+    private final UserCredentialMapper userCredentialMapper;
 
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
-    private final SystemUserRepository systemUserRepository;
+    private final UserCredentialRepository userCredentialRepository;
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
@@ -56,15 +54,15 @@ public class AuthService {
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         tenant.setSchemaName(tenant.getBankName()+"_schema");
 
-        SystemUser systemUser = systemUserMapper.toSystemUser(bankRegisterDto);
-        systemUser.setRole(SystemUserRole.BANK_ADMIN);
+        UserCredential systemUser = userCredentialMapper.toUserCredential(bankRegisterDto);
+        systemUser.setRole(GlobalUserRole.BANK_ADMIN);
         systemUser.setTenant(tenant);
         systemUser.setPasswordHash(passwordEncoder.encode(bankRegisterDto.password()));
 
-        User user = userMapper.toUser(bankRegisterDto);
+        TenantUser user = tenantUserMapper.toTenantUser(bankRegisterDto);
         user.setSystemUser(systemUser);
-        user.setUserRole(TenantUserRole.BANK_ADMIN);
-        user.setCreatedBy(systemUserRepository.findById(SecurityUtils.getCurrentUser().orElseThrow().getId()).orElseThrow());
+        user.setRole(TenantUserRole.BANK_ADMIN);
+        user.setCreatedBy(userCredentialRepository.findById(SecurityUtils.getCurrentUser().orElseThrow().getId()).orElseThrow());
 
         tenantSchemaService.createSchema(tenant.getSchemaName());
         return "Tenant created";
@@ -79,13 +77,13 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         assert userDetails != null;
-        SystemUser user = systemUserRepository.findById(userDetails.getId())
+        UserCredential user = userCredentialRepository.findById(userDetails.getId())
                 .orElseThrow();
 
         user.setLastLoginAt(LocalDateTime.now());
         user.setFailedLoginAttempts(0);
 
-        systemUserRepository.save(user);
+        userCredentialRepository.save(user);
 
         String jwt = jwtUtils.generateJwtToken(
                 userDetails.getEmail(),
