@@ -48,4 +48,9 @@ public class File extends BaseEntity {
     @Column(nullable = false, name = "is_removed")
     @ColumnDefault("FALSE")
     private Boolean isRemoved = false;
+
+    @Column(name = "success_records")
+    private Integer successRecords;
+    @Column(name = "failed_records")
+    private Integer failedRecords;
 }
