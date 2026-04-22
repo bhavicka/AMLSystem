@@ -8,7 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -35,7 +37,9 @@ public class TenantUser extends BaseEntity {
     @Column(nullable = false, unique = true, name = "employee_code")
     private String employeeCode;
 
-    @Column(nullable = false, name = "role")
+    @Column(nullable = false, name = "role",columnDefinition = "user_role")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
     private TenantUserRole role;
 
     @ManyToOne(fetch = FetchType.LAZY)

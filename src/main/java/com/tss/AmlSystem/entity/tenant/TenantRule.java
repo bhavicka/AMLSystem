@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Table(name = "tenant_rules")
 @Entity
@@ -29,7 +31,8 @@ public class TenantRule extends BaseEntity {
     @Column(nullable = false,columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false, name = "severity_rate")
+    @Column(nullable = false, name = "severity_rate",columnDefinition = "severity")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     private Severity severityRate;
 

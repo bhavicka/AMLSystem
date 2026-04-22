@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Table(name = "accounts")
 @Entity
@@ -22,11 +24,13 @@ public class Account extends BaseEntity {
     @Column(nullable = false, unique = true, name = "account_number")
     private String accountNumber;
 
-    @Column(nullable = false, name = "account_type")
+    @Column(nullable = false, name = "account_type",columnDefinition = "account_type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
 
-    @Column(nullable = false, name = "account_status")
+    @Column(nullable = false, name = "account_status",columnDefinition = "account_status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;
 }

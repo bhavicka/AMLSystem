@@ -96,7 +96,8 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
                     .existsByAccountNumberAndTenantRuleAndGeneratedAtAfter(
                             accountNumber,
                             ruleContext.getTenantRule(),
-                            effectiveStart
+                            effectiveStart,
+                            AlertStatus.NEW
                     );
 
             if (alreadyAlerted) continue;

@@ -19,12 +19,13 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
            WHERE t.accountNumber = :accountNumber
              AND a.tenantRule = :tenantRule
              AND a.createdAt > :since
-             AND a.status = com.tss.AmlSystem.entity.enums.tenant.AlertStatus.NEW
+             AND a.status = :status
            """)
     boolean existsByAccountNumberAndTenantRuleAndGeneratedAtAfter(
             @Param("accountNumber") String accountNumber,
             @Param("tenantRule") TenantRule tenantRule,
-            @Param("since") LocalDateTime since
+            @Param("since") LocalDateTime since,
+            @Param("status") AlertStatus status
     );
 
 //    @Query(value = """

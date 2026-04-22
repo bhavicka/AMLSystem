@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,15 +42,17 @@ public class Customer extends BaseEntity {
     @Column(nullable = false, name = "occupation")
     private String occupation;
 
-    @Column(nullable = false, name = "occupation_type")
+    @Column(nullable = false, name = "occupation_type",columnDefinition = "occupation_type")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private OccupationType occupationType;
 
     @Column(nullable = false, name = "is_pep")
     private Boolean isPep;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "risk_rate")
+    @Column(nullable = false, name = "risk_rate",columnDefinition = "severity")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private Severity riskRate;
 
     @Column(nullable = false, precision = 19, scale = 2, name = "monthly_income")
