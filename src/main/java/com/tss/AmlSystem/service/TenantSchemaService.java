@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 public class TenantSchemaService {
     private final DataSource dataSource;
     public void createSchema(String name) {
-        String newSchema = name + "_" + System.currentTimeMillis();
+        String newSchema = name + "_schema";
         Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(newSchema)

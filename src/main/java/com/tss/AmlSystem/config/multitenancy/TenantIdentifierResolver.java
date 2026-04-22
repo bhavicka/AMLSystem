@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver {
     @Override
     public String resolveCurrentTenantIdentifier() {
-        String tenantId = TenantContext.getCurrentTenant();
-        return (tenantId != null) ? tenantId : "public";
+        String schemaName = TenantContext.getCurrentTenant();
+        return (schemaName != null) ? schemaName : "public";
     }
 
     @Override
