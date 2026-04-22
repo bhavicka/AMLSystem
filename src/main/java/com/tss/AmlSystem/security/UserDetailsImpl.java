@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
 
 @AllArgsConstructor
 @Getter
@@ -16,6 +17,7 @@ public class UserDetailsImpl implements UserDetails {
     private String password;
     private String schemaName;
     private String bankName;
+    private List<String> roles;
     private boolean active;
     private boolean locked;
     private boolean deleted;

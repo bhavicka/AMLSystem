@@ -90,14 +90,15 @@ public class AuthService {
         String jwt = jwtUtils.generateJwtToken(
                 userDetails.getEmail(),
                 userDetails.getBankName(),
-                userDetails.getSchemaName()
+                userDetails.getSchemaName(),
+                userDetails.getRoles()
         );
 
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
-        String roles = userDetails.getAuthorities().stream()
+        List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .toList().getFirst();
+                .toList();
 
         return new JwtResponse(
                 jwt,

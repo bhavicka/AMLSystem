@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 user.getPasswordHash(),
                 schemaName,
                 bankName,
+                List.of(user.getRole().toString()),
                 user.getIsActive(),       // from DB
                 user.getAccountLocked(),  // from DB
                 user.getIsDeleted(),       // from DB
