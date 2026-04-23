@@ -108,6 +108,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             alert.setTenantRule(ruleContext.getTenantRule());
             alert.setStatus(AlertStatus.NEW);
             alert.setCreatedAt(LocalDateTime.now());
+            alert.setAlertNumber(generateAlertNumber());
 
             alertRepository.save(alert);
         }

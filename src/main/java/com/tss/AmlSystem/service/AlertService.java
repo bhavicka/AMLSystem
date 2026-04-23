@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.service;
 
+import com.tss.AmlSystem.dto.response.AlertDashboardDto;
 import com.tss.AmlSystem.dto.response.AlertDetailDto;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.mapper.AlertMapper;
@@ -30,5 +31,11 @@ public class AlertService {
         return alertMapper.toAlertDetailDto(projection,totalAmount, transactions);
     }
 
+    public AlertDashboardDto getAlertDashboard(){
+        AlertDashboardDto alertDashboardDto=new AlertDashboardDto();
 
+        alertDashboardDto.setAlerts(alertMapper.toGeneratedAlertDtos(alertRepository.findAll()));
+
+        return alertDashboardDto;
+    }
 }
