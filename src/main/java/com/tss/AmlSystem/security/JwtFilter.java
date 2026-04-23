@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -28,26 +29,21 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        try {
-            String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
-                String schemaName = jwtUtils.getSchemaFromJwtToken(jwt);
-                List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
-                List<SimpleGrantedAuthority> authorities = (roles != null) ? roles.stream()
-                        .map(role -> new SimpleGrantedAuthority(role))
-                        .toList() : List.of();
+        String jwt = parseJwt(request);
+        if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            String username = jwtUtils.getUserNameFromJwtToken(jwt);
+            String schemaName = jwtUtils.getSchemaFromJwtToken(jwt);
+            List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
+            List<SimpleGrantedAuthority> authorities = (roles != null) ? roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .toList() : List.of();
 
-                TenantContext.setCurrentTenant(schemaName);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
+            TenantContext.setCurrentTenant(schemaName);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
         try {
             filterChain.doFilter(request, response);
         } finally {
