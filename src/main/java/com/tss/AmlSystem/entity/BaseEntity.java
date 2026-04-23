@@ -15,7 +15,7 @@ public abstract class BaseEntity {
     private Long id;
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 }

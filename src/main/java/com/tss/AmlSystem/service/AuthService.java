@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.service;
 
+import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.BankRegisterDto;
 import com.tss.AmlSystem.dto.request.LoginRequest;
 import com.tss.AmlSystem.dto.response.JwtResponse;
@@ -48,10 +49,10 @@ public class AuthService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(6);
 
-    @Transactional
     public String registerBank(BankRegisterDto bankRegisterDto){
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
-        tenant.setSchemaName(tenant.getBankName()+"_schema");
+        String schemaName = tenant.getBankName().replaceAll("\\s+", "_").toLowerCase() + "_schema";
+        tenant.setSchemaName(schemaName);
         tenantRepository.save(tenant);
 
         UserCredential userCredential = userCredentialMapper.toUserCredential(bankRegisterDto);
@@ -60,21 +61,13 @@ public class AuthService {
         userCredential.setPasswordHash(passwordEncoder.encode(bankRegisterDto.password()));
         userCredentialRepository.save(userCredential);
 
-        TenantUser user = tenantUserMapper.toTenantUser(bankRegisterDto);
-        user.setSystemUser(userCredential);
-        user.setRole(TenantUserRole.BANK_ADMIN);
-
-// 1. Get the current user's email (String) directly from the Security Context
-        String currentUserEmail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-// 2. Fetch the actual UserCredential entity from the database using that email
-        UserCredential currentUser = userCredentialRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("Current user not found in database"));
-
-// 3. Set the creator
-        user.setCreatedBy(currentUser);
-        userRepository.save(user);
         tenantSchemaService.createSchema(tenant.getSchemaName());
+        TenantContext.setCurrentTenant(tenant.getSchemaName());
+        try{
+            tenantSchemaService.populateTenantSchema(bankRegisterDto, userCredential, tenant.getSchemaName());
+        }finally {
+            TenantContext.clear();
+        }
         return "Tenant created";
     }
 
