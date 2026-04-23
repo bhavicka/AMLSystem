@@ -1,7 +1,10 @@
 package com.tss.AmlSystem.controller;
 
+import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.BankRegisterDto;
+import com.tss.AmlSystem.dto.request.ComplianceOfficerRegisterDto;
 import com.tss.AmlSystem.dto.request.LoginRequest;
+import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
 import com.tss.AmlSystem.dto.response.JwtResponse;
 import com.tss.AmlSystem.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +29,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.registerBank(bankRegisterDto));
     }
 
+    @PostMapping("/register/bank-officers")
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<ComplianceOfficerRegisteredDto> registerComplianceOfficer(@RequestBody ComplianceOfficerRegisterDto complianceOfficerRegisterDto){
+        return ResponseEntity.ok(authService.registerComplianceOfficer(complianceOfficerRegisterDto));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest loginRequest){
         return ResponseEntity.ok(authService.login(loginRequest));
     }
+
+
 }
