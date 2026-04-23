@@ -5,6 +5,7 @@ import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
+import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component("STRUCTURING")
 @RequiredArgsConstructor
@@ -108,7 +110,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             alert.setTenantRule(ruleContext.getTenantRule());
             alert.setStatus(AlertStatus.NEW);
             alert.setCreatedAt(LocalDateTime.now());
-            alert.setAlertNumber(generateAlertNumber());
+            alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
 
             alertRepository.save(alert);
         }
