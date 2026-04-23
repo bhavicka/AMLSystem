@@ -23,6 +23,7 @@ CREATE TABLE tenant_users (
                        middle_name VARCHAR(255),
                        last_name VARCHAR(255) NOT NULL,
                        employee_code VARCHAR(100) UNIQUE NOT NULL,
+                       is_deleted BOOLEAN DEFAULT FALSE,
     -- Using the custom enum types
                        role user_role NOT NULL,
     -- Audit fields
