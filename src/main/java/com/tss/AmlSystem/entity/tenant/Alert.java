@@ -25,6 +25,10 @@ public class Alert extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "case_id")
     private Case caseId;
+
+    @Column(name = "alert_number")
+    private String alertNumber;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM) // This tells Hibernate to use the DB's native enum
     @Column(name = "status", columnDefinition = "alert_status")
