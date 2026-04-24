@@ -1,0 +1,26 @@
+package com.tss.AmlSystem.strategy;
+
+import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+public class FileHeaderValidatorFactory {
+    private final Map<FileType, FileHeaderValidator> validatorMap;
+
+    public FileHeaderValidatorFactory(List<FileHeaderValidator> validators) {
+        this.validatorMap = validators.stream()
+                .collect(Collectors.toMap(FileHeaderValidator::getFileType, v -> v));
+    }
+
+    public FileHeaderValidator getValidator(FileType fileType) {
+        FileHeaderValidator validator = validatorMap.get(fileType);
+        if (validator == null) {
+            throw new IllegalArgumentException("No validator found for " + fileType);
+        }
+        return validator;
+    }
+}

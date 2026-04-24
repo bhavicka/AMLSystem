@@ -2,10 +2,15 @@ package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
+import com.tss.AmlSystem.entity.enums.tenant.FileType;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.FileRepository;
 import com.tss.AmlSystem.repository.TenantUserRepository;
+import com.tss.AmlSystem.strategy.FileHeaderValidator;
+import com.tss.AmlSystem.strategy.FileHeaderValidatorFactory;
+import com.tss.AmlSystem.strategy.FileJobLauncher;
+import com.tss.AmlSystem.strategy.FileJobLauncherFactory;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,32 +29,43 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-public class CustomerBatchService {
+public class FileUploadService {
 
     private final FileRepository fileRepository;
     private final TenantUserRepository tenantUserRepository;
-    private final BatchJobLauncherService batchJobLauncherService;
+    private final FileJobLauncherFactory launcherFactory;
+    private final FileHeaderValidatorFactory validatorFactory;
 
-    public Map<String, Object> uploadAndProcess(MultipartFile multipartFile, Long uploadedBy) throws Exception {
+    public Map<String, Object> uploadFile(MultipartFile multipartFile, Long uploadedBy, FileType fileType) throws Exception {
         String tenant = TenantContext.getCurrentTenant();
         TenantUser tenantUser = tenantUserRepository.findById(uploadedBy)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant user not found: " + uploadedBy));
 
-        Path storedFilePath = storeFile(multipartFile);
+        FileHeaderValidator validator = validatorFactory.getValidator(fileType);
+        validator.validate(multipartFile);
+
+        System.out.println("header validated");
+
+        Path storedFilePath = storeFile(multipartFile,fileType);
         int totalRows = countDataRows(storedFilePath);
 
 
         File file = new File();
+        file.setUploadedBy(tenantUser);
+        file.setFileType(fileType);
         file.setFileName(multipartFile.getOriginalFilename());
         file.setFileStoragePath(storedFilePath.toString());
         file.setFileSizeBytes(multipartFile.getSize());
         file.setTotalRecords(totalRows);
-        file.setProcessedAt(LocalDateTime.now());
         file.setStatus(FileStatus.UPLOADED);
         file.setCreatedAt(LocalDateTime.now());
         file = fileRepository.save(file);
 
-        Long jobExecutionId = batchJobLauncherService.launchCustomerJob(storedFilePath.toString(), file.getId(), tenant);
+        System.out.println("file stored");
+
+        FileJobLauncher launcher=launcherFactory.getLauncher(fileType);
+
+        Long jobExecutionId = launcher.launch(storedFilePath.toString(), file.getId(), tenant);
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Customer batch job launched");
@@ -61,8 +77,8 @@ public class CustomerBatchService {
         return response;
     }
 
-    private Path storeFile(MultipartFile multipartFile) throws IOException {
-        Path uploadDir = Path.of("uploads", "customer");
+    private Path storeFile(MultipartFile multipartFile,FileType fileType) throws IOException {
+        Path uploadDir = Path.of("uploads", fileType.name().toLowerCase());
         Files.createDirectories(uploadDir);
 
         String originalName = multipartFile.getOriginalFilename();
