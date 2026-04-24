@@ -17,19 +17,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register/bank")
+    @PostMapping("/banks/register")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<String> registerBank(@RequestBody BankRegisterDto bankRegisterDto){
         return ResponseEntity.ok(authService.registerBank(bankRegisterDto));
     }
 
-    @PostMapping("/register/bank-officers")
+    @PostMapping("/bank-officers/register")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<ComplianceOfficerRegisteredDto> registerComplianceOfficer(@RequestBody ComplianceOfficerRegisterDto complianceOfficerRegisterDto){
         return ResponseEntity.ok(authService.registerComplianceOfficer(complianceOfficerRegisterDto));
@@ -39,6 +39,4 @@ public class AuthController {
     public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest loginRequest){
         return ResponseEntity.ok(authService.login(loginRequest));
     }
-
-
 }
