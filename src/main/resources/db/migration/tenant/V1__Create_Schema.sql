@@ -71,11 +71,14 @@ CREATE TABLE files(
                       file_size_bytes BIGINT NOT NULL,
                       total_records INTEGER NOT NULL,
                       status file_status NOT NULL DEFAULT 'UPLOADED',
-                        file_type file_type NOT NULL,
+                      file_type file_type NOT NULL,
                       processed_at TIMESTAMP,
                       is_removed BOOLEAN DEFAULT FALSE,
                       is_deleted BOOLEAN DEFAULT FALSE,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                     CONSTRAINT fk_uploaded_by
+                            FOREIGN KEY (uploaded_by)
+                                REFERENCES tenant_users(id)
 
 );
 CREATE TABLE file_validation_errors (
