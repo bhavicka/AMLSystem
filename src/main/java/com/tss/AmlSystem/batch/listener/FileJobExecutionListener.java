@@ -1,17 +1,13 @@
 package com.tss.AmlSystem.batch.listener;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
-import com.tss.AmlSystem.entity.enums.tenant.BatchStatus;
+import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
 import com.tss.AmlSystem.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.step.StepExecution;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -34,7 +30,7 @@ public class FileJobExecutionListener implements JobExecutionListener {
         }
 
         fileRepository.findById(fileId).ifPresent(file -> {
-            file.setStatus(BatchStatus.PROCESSING);
+            file.setStatus(FileStatus.PROCESSING);
             fileRepository.save(file);
         });
     }
@@ -48,7 +44,7 @@ public class FileJobExecutionListener implements JobExecutionListener {
             }
 
             fileRepository.findById(fileId).ifPresent(file -> {
-                file.setStatus(BatchStatus.COMPLETED);
+                file.setStatus(FileStatus.COMPLETED);
                 fileRepository.save(file);
                 log.info("File {} processing completed.", fileId);
             });

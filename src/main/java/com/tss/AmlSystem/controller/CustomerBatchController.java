@@ -29,8 +29,7 @@ public class CustomerBatchController {
     )
     public ResponseEntity<Map<String, Object>> uploadCustomerFile(
             @RequestParam("file") MultipartFile multipartFile,
-            @RequestParam("uploadedBy") Long uploadedBy,
-            @RequestParam(value = "tenant", required = false) String tenant
+            @RequestParam("uploadedBy") Long uploadedBy
     ) throws Exception {
         if (multipartFile.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "File is required"));
@@ -41,15 +40,12 @@ public class CustomerBatchController {
             return ResponseEntity.badRequest().body(Map.of("message", "Only CSV files are supported"));
         }
 
-        if (StringUtils.hasText(tenant)) {
-            TenantContext.setCurrentTenant(tenant.trim());
-        }
-
         try {
             Map<String, Object> response = customerBatchService.uploadAndProcess(multipartFile, uploadedBy);
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
-        } finally {
-            TenantContext.clear();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to process file: " + e.getMessage()));
         }
     }
 }

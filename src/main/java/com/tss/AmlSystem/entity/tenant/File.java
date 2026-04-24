@@ -1,7 +1,8 @@
 package com.tss.AmlSystem.entity.tenant;
 
 import com.tss.AmlSystem.entity.BaseEntity;
-import com.tss.AmlSystem.entity.enums.tenant.BatchStatus;
+import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
+import com.tss.AmlSystem.entity.enums.tenant.FileType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,8 +22,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class File extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false)
-    private Batch batch;
+    @JoinColumn(name = "uploaded_by", nullable = false)
+    private TenantUser uploadedBy;
 
     @Column(nullable = false, name = "file_name")
     private String fileName;
@@ -39,8 +40,13 @@ public class File extends BaseEntity {
     @ColumnDefault("uploaded")
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, name = "status", columnDefinition = "batch_status")
-    private BatchStatus status = BatchStatus.UPLOADED;
+    @Column(nullable = false, name = "status", columnDefinition = "file_status")
+    private FileStatus status = FileStatus.UPLOADED;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, name = "file_type", columnDefinition = "file_type")
+    private FileType fileType;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;

@@ -1,8 +1,7 @@
 package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
-import com.tss.AmlSystem.entity.enums.tenant.BatchStatus;
-import com.tss.AmlSystem.entity.tenant.Batch;
+import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.BatchRepository;
@@ -41,18 +40,14 @@ public class CustomerBatchService {
         Path storedFilePath = storeFile(multipartFile);
         int totalRows = countDataRows(storedFilePath);
 
-        Batch batch = new Batch();
-        batch.setUploadedBy(tenantUser);
-        batch = batchRepository.save(batch);
 
         File file = new File();
-        file.setBatch(batch);
         file.setFileName(multipartFile.getOriginalFilename());
         file.setFileStoragePath(storedFilePath.toString());
         file.setFileSizeBytes(multipartFile.getSize());
         file.setTotalRecords(totalRows);
         file.setProcessedAt(LocalDateTime.now());
-        file.setStatus(BatchStatus.UPLOADED);
+        file.setStatus(FileStatus.UPLOADED);
         file.setCreatedAt(LocalDateTime.now());
         file = fileRepository.save(file);
 
@@ -62,7 +57,6 @@ public class CustomerBatchService {
         response.put("message", "Customer batch job launched");
         response.put("jobExecutionId", jobExecutionId);
         response.put("fileId", file.getId());
-        response.put("batchId", batch.getId());
         response.put("totalRecords", totalRows);
         response.put("status", file.getStatus());
 
