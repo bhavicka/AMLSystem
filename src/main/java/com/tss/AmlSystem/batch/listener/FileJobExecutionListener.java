@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.batch.listener;
 
+import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.entity.enums.tenant.BatchStatus;
 import com.tss.AmlSystem.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,12 @@ public class FileJobExecutionListener implements JobExecutionListener {
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
+        String tenant = jobExecution.getJobParameters().getString("tenant");
+        if (tenant != null) {
+            TenantContext.setCurrentTenant(tenant);
+            log.info("Set TenantContext to: {} for jobExecutionId: {}", tenant, jobExecution.getId());
+        }
+
         Long fileId = jobExecution.getJobParameters().getLong("fileId");
         if (fileId == null) {
             return;
@@ -34,26 +41,20 @@ public class FileJobExecutionListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        Long fileId = jobExecution.getJobParameters().getLong("fileId");
-        if (fileId == null) {
-            return;
+        try {
+            Long fileId = jobExecution.getJobParameters().getLong("fileId");
+            if (fileId == null) {
+                return;
+            }
+
+            fileRepository.findById(fileId).ifPresent(file -> {
+                file.setStatus(BatchStatus.COMPLETED);
+                fileRepository.save(file);
+                log.info("File {} processing completed.", fileId);
+            });
+        } finally {
+            TenantContext.clear();
+            log.info("Cleared TenantContext for jobExecutionId: {}", jobExecution.getId());
         }
-
-        fileRepository.findById(fileId).ifPresent(file -> {
-            Optional<StepExecution> stepExecution = jobExecution.getStepExecutions().stream().findFirst();
-            long written = stepExecution.map(StepExecution::getWriteCount).orElse(0l);
-            long failed = stepExecution.map(step ->
-                    step.getFilterCount() + step.getReadSkipCount() + step.getProcessSkipCount() + step.getWriteSkipCount()
-            ).orElse(0l);
-
-            file.setSuccessRecords((int) written);
-            file.setFailedRecords((int) failed);
-            file.setProcessedAt(LocalDateTime.now());
-
-            file.setStatus(BatchStatus.COMPLETED);
-
-            fileRepository.save(file);
-            log.info("File {} done - written: {}, failed: {}", fileId, written, failed);
-        });
     }
 }

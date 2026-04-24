@@ -30,7 +30,8 @@ public class CustomerBatchConfig {
             CustomerItemWriter writer
     ) {
         return new StepBuilder("customerProcessingStep", jobRepository)
-                .<CustomerDTO, Customer>chunk(1000, transactionManager)
+                .<CustomerDTO, Customer>chunk(1000)
+                .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
