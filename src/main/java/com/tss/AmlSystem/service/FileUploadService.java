@@ -38,6 +38,7 @@ public class FileUploadService {
 
     public Map<String, Object> uploadFile(MultipartFile multipartFile, Long uploadedBy, FileType fileType) throws Exception {
         String tenant = TenantContext.getCurrentTenant();
+        System.out.println(tenant);
         TenantUser tenantUser = tenantUserRepository.findById(uploadedBy)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant user not found: " + uploadedBy));
 

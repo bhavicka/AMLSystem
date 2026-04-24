@@ -30,7 +30,7 @@ public class CustomerItemReader {
                 .resource(new FileSystemResource(filePath))
                 .strict(true)
                 .linesToSkip(1)
-                .skippedLinesCallback(line -> fileValidationService.validateCustomerHeader(line, fileId))
+//                .skippedLinesCallback(line -> fileValidationService.validateCustomerHeader(line, fileId))
                 .delimited()
                 .delimiter(",")
                 .strict(true)

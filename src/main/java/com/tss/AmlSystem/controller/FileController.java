@@ -21,14 +21,15 @@ public class FileController {
     private final FileUploadService fileUploadService;
 
     @PostMapping(
-            value = "/upload",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
+            value = "/upload"
+//            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+//            produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<Map<String, Object>> uploadFile(
-            @RequestParam("file") MultipartFile multipartFile,
-            @RequestBody FileUploadDto fileUploadDto)
+            @RequestPart("file") MultipartFile multipartFile,
+            @RequestPart("fileUploadDto") FileUploadDto fileUploadDto)
     {
+        System.out.println("here");
 
         if (multipartFile.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "File is required"));
