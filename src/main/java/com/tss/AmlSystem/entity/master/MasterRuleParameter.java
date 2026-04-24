@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "master_rule_parameters",  schema = "public")
+@Table(name = "rule_template_parameters",  schema = "public")
 @Getter
 @Setter
 @AllArgsConstructor

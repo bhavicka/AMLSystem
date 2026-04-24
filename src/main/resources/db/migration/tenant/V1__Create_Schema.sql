@@ -7,7 +7,7 @@ CREATE TABLE tenant_rules (
                               rule_name VARCHAR(255) NOT NULL UNIQUE,
                               description TEXT NOT NULL,
                               severity_rate severity NOT NULL,
-                              is_active BOOLEAN NOT NULL,
+                              is_active BOOLEAN NOT NULL DEFAULT FALSE,
                               is_deleted BOOLEAN DEFAULT FALSE,
                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               CONSTRAINT fk_rule_template
@@ -243,3 +243,14 @@ CREATE TABLE notifications (
 
                                CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES tenant_users (id)
 );
+
+INSERT INTO tenant_rules (rule_id, rule_code, rule_name, description, severity_rate)
+SELECT id, rule_code, rule_name, description, severity_rate::text::severity
+FROM public.rule_templates
+WHERE is_deleted = false;
+
+INSERT INTO tenant_rule_parameters (rule_id, param_key, param_value, min_value, max_value)
+select r.id, p.param_key, p.param_value, p.min_value, p.max_value
+from tenant_rules r
+join public.rule_template_parameters p on r.rule_id = p.rule_id
+where r.is_deleted = false and p.is_deleted = false;
