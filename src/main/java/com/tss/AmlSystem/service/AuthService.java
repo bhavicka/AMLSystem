@@ -4,6 +4,7 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.BankRegisterDto;
 import com.tss.AmlSystem.dto.request.ComplianceOfficerRegisterDto;
 import com.tss.AmlSystem.dto.request.LoginRequest;
+import com.tss.AmlSystem.dto.request.TokenRefreshRequest;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
 import com.tss.AmlSystem.dto.response.JwtResponse;
 import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
@@ -137,4 +138,32 @@ public class AuthService {
                 roles
         );
     }
+    public JwtResponse refreshToken(TokenRefreshRequest request) {
+        String requestRefreshToken = request.refreshToken();
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(user -> {
+                    // Generate new JWT
+                    String token = jwtUtils.generateJwtToken(
+                            user.getEmail(),
+                            user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
+                            user.getTenant() != null ? user.getTenant().getSchemaName() : "public",
+                            List.of(user.getRole().name())
+                    );
+
+                    // Return response with new JWT and existing/new refresh token
+                    return new JwtResponse(
+                            token,
+                            "Bearer",
+                            user.getRefreshToken(),
+                            user.getEmail(),
+                            user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
+                            List.of(user.getRole().name())
+                    );
+                })
+                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+    }
+
+
 }
