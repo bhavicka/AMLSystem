@@ -7,6 +7,5 @@ import java.util.Optional;
 
 @Repository
 public interface TenantRepository extends JpaRepository<Tenant, Long> {
-
     Optional<Tenant> findBySchemaName(String currentTenant);
 }
