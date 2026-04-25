@@ -15,7 +15,7 @@ import java.time.LocalDate;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class RootController {
     private final TenantSchemaService tenantSchemaService;
     private final RuleEngineService ruleEngineService;
