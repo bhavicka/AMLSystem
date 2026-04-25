@@ -1,10 +1,7 @@
 package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
-import com.tss.AmlSystem.dto.request.BankRegisterDto;
-import com.tss.AmlSystem.dto.request.ComplianceOfficerRegisterDto;
-import com.tss.AmlSystem.dto.request.LoginRequest;
-import com.tss.AmlSystem.dto.request.TokenRefreshRequest;
+import com.tss.AmlSystem.dto.request.*;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
 import com.tss.AmlSystem.dto.response.JwtResponse;
 import com.tss.AmlSystem.service.AuthService;
@@ -34,6 +31,15 @@ public class AuthController {
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<ComplianceOfficerRegisteredDto> registerComplianceOfficer(@RequestBody ComplianceOfficerRegisterDto complianceOfficerRegisterDto){
         return ResponseEntity.ok(authService.registerComplianceOfficer(complianceOfficerRegisterDto));
+    }
+
+    @PostMapping("/update-password")
+    @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<String> updatePassword(@RequestBody PasswordChangeRequestDto request){
+        if(authService.updatePassword(request))
+            return ResponseEntity.ok("Password updated successfully");
+        else
+            return ResponseEntity.badRequest().body("Current password is incorrect");
     }
 
     @PostMapping("/login")

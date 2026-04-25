@@ -5,6 +5,5 @@ public record ComplianceOfficerRegisterDto(
         String lastName,
         String middleName,
         String email,
-        String password,
         String employeeCode
 ){}
