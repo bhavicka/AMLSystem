@@ -18,6 +18,10 @@ public class AmlSystemApplication {
 		System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
 		System.setProperty("JWT_EXPIRATION_MS", dotenv.get("JWT_EXPIRATION_MS"));
 		System.setProperty("JWT_REFRESH_EXPIRATION_MS", dotenv.get("JWT_REFRESH_EXPIRATION_MS"));
+
+		System.setProperty("EMAIL", dotenv.get("EMAIL"));
+		System.setProperty("EMAIL_PASSWORD", dotenv.get("EMAIL_PASSWORD"));
+
 		SpringApplication.run(AmlSystemApplication.class, args);
 	}
 
