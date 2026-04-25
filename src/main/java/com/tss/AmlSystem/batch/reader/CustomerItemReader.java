@@ -1,7 +1,7 @@
 package com.tss.AmlSystem.batch.reader;
 
 import com.tss.AmlSystem.dto.request.CustomerDTO;
-import com.tss.AmlSystem.service.FileValidationService;
+import com.tss.AmlSystem.utils.FileHeaders;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
@@ -16,13 +16,10 @@ import org.springframework.util.Assert;
 @RequiredArgsConstructor
 public class CustomerItemReader {
 
-    private final FileValidationService fileValidationService;
-
     @Bean
     @StepScope
     public FlatFileItemReader<CustomerDTO> customerReader(
-            @Value("#{jobParameters['filePath']}") String filePath,
-            @Value("#{jobParameters['fileId']}") Long fileId
+            @Value("#{jobParameters['filePath']}") String filePath
     ) {
         Assert.hasText(filePath, "Job parameter 'filePath' is required");
         return new FlatFileItemReaderBuilder<CustomerDTO>()
@@ -30,11 +27,9 @@ public class CustomerItemReader {
                 .resource(new FileSystemResource(filePath))
                 .strict(true)
                 .linesToSkip(1)
-//                .skippedLinesCallback(line -> fileValidationService.validateCustomerHeader(line, fileId))
                 .delimited()
                 .delimiter(",")
-                .strict(true)
-                .names(fileValidationService.getCustomerHeaders().toArray(String[]::new))
+                .names(FileHeaders.CUSTOMER_HEADER.toArray(new String[0]))
                 .targetType(CustomerDTO.class)
                 .build();
     }

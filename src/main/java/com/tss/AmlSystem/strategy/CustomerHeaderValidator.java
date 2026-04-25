@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.strategy;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.utils.FileHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,22 +34,7 @@ public class CustomerHeaderValidator implements FileHeaderValidator{
                     .map(String::trim)
                     .toList();
 
-            List<String> expectedHeaders = List.of(
-                    "clientNumber",
-                    "firstName",
-                    "lastName",
-                    "middleName",
-                    "aadharNumber",
-                    "pan",
-                    "occupation",
-                    "occupationType",
-                    "isPep",
-                    "riskRate",
-                    "monthlyIncome",
-                    "dob",
-                    "professionMultiplier",
-                    "familyCode"
-            );
+            List<String> expectedHeaders = FileHeaders.CUSTOMER_HEADER;
 
             if (!actualHeaders.equals(expectedHeaders)) {
                 throw new IllegalArgumentException("Invalid CUSTOMER file headers");

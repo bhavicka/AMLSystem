@@ -7,6 +7,7 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +23,7 @@ public class BatchJobLauncherService {
         this.customerImportJob = customerImportJob;
     }
 
+    @Async
     public Long launchCustomerJob(String filePath, Long fileId, String tenant) throws Exception {
         JobParameters params = new JobParametersBuilder()
                 .addString("filePath", filePath)

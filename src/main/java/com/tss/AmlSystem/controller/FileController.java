@@ -1,11 +1,9 @@
 package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.dto.request.FileUploadDto;
-import com.tss.AmlSystem.service.CustomerBatchService;
 import com.tss.AmlSystem.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;

@@ -23,48 +23,10 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class FileValidationService {
 
-    private static final List<String> CUSTOMER_HEADERS = List.of(
-            "clientNumber", "firstName", "lastName", "middleName",
-            "aadharNumber", "pan", "occupation", "occupationType",
-            "isPep", "riskRate", "monthlyIncome", "dob",
-            "professionMultiplier", "familyCode"
-    );
 
     private final FileRepository fileRepository;
     private final FileValidationErrorsRepository fileValidationErrorsRepository;
 
-    public List<String> getCustomerHeaders() {
-        return CUSTOMER_HEADERS;
-    }
-
-    public void validateCustomerHeader(String headerLine, Long fileId) {
-        List<String> actualHeaders = Arrays.stream(headerLine.split(",", -1))
-                .map(String::trim)
-                .toList();
-
-        if (CUSTOMER_HEADERS.equals(actualHeaders)) {
-            return;
-        }
-
-        File file = getFile(fileId);
-        List<FileValidationErrors> errors = new ArrayList<>();
-        int maxSize = Math.max(CUSTOMER_HEADERS.size(), actualHeaders.size());
-
-        for (int index = 0; index < maxSize; index++) {
-            String expected = index < CUSTOMER_HEADERS.size() ? CUSTOMER_HEADERS.get(index) : null;
-            String actual = index < actualHeaders.size() ? actualHeaders.get(index) : null;
-
-            if ((expected == null && actual != null) || (expected != null && !expected.equals(actual))) {
-                String message = expected == null
-                        ? "Unexpected column: " + actual
-                        : "Expected column '" + expected + "' but found '" + actual + "'";
-                errors.add(buildError(file, 1, "header", message));
-            }
-        }
-
-        fileValidationErrorsRepository.saveAll(errors);
-        throw new IllegalArgumentException("Customer CSV headers do not match the expected format");
-    }
 
     public List<FileValidationErrors> validateCustomer(CustomerDTO dto, File file, int rowNumber) {
         List<FileValidationErrors> errors = new ArrayList<>();
