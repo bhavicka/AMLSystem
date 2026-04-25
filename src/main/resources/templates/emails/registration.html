@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div style="font-family: sans-serif; border: 1px solid #eee; padding: 20px;">
+    <h2>Welcome to the AML System</h2>
+    <p>Hello <strong th:text="${name}">Admin</strong>,</p>
+    <p>Your account is ready. Use the temporary password below to log in:</p>
+    <div style="background: #f4f4f4; padding: 10px; font-weight: bold; font-size: 18px;">
+        <span th:text="${password}">TEMP_PASS</span>
+    </div>
+    <p><strong>Note:</strong> You must change this password upon your first login.</p>
+</div>
+</body>
+</html>
