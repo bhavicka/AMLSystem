@@ -126,12 +126,16 @@ public class FileValidationService {
         if (!StringUtils.hasText(value)) {
             return;
         }
-
+        BigDecimal number;
         try {
-            new BigDecimal(value.trim());
+            number = new BigDecimal(value.trim());
+            if(number.compareTo(BigDecimal.ZERO) < 0) {
+                errors.add(buildError(file, rowNumber, field,  "Monthly income cannot be negative"));
+            }
         } catch (NumberFormatException ex) {
             errors.add(buildError(file, rowNumber, field, message));
         }
+
     }
 
     private FileValidationErrors buildError(File file, int rowNumber, String field, String message) {

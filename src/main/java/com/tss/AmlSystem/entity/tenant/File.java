@@ -9,10 +9,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Table(name = "files")
 @Entity
@@ -27,6 +29,9 @@ public class File extends BaseEntity {
 
     @Column(nullable = false, name = "file_name")
     private String fileName;
+
+    @Column(nullable = false, name = "file_number", unique = true, updatable = false, columnDefinition = "uuid")
+    private UUID fileNumber = UUID.randomUUID();
 
     @Column(name = "file_storage_path")
     private String fileStoragePath;
@@ -47,9 +52,6 @@ public class File extends BaseEntity {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false, name = "file_type", columnDefinition = "file_type")
     private FileType fileType;
-
-    @Column(name = "processed_at")
-    private LocalDateTime processedAt;
 
     @Column(nullable = false, name = "is_removed")
     @ColumnDefault("FALSE")

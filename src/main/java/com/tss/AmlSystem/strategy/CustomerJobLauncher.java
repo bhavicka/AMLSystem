@@ -16,7 +16,7 @@ public class CustomerJobLauncher implements FileJobLauncher {
     }
 
     @Override
-    public Long launch(String filePath, Long fileId, String tenant) throws Exception {
-        return batchJobLauncherService.launchCustomerJob(filePath, fileId, tenant);
+    public void launch(String filePath, Long fileId, String tenant) throws Exception {
+        batchJobLauncherService.launchCustomerJob(filePath, fileId, tenant);
     }
 }

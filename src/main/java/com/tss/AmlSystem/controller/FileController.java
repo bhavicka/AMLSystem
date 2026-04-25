@@ -1,49 +1,40 @@
 package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.dto.request.FileUploadDto;
+import com.tss.AmlSystem.dto.response.FileUploadProcessDto;
 import com.tss.AmlSystem.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/files")
+@RequestMapping("/api/v1/files")
 public class FileController {
 
     private final FileUploadService fileUploadService;
 
-    @PostMapping(
-            value = "/upload"
-//            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-//            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<Map<String, Object>> uploadFile(
+    @PostMapping("/upload")
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<FileUploadProcessDto> uploadFile(
             @RequestPart("file") MultipartFile multipartFile,
-            @RequestPart("fileUploadDto") FileUploadDto fileUploadDto)
-    {
+            @RequestPart("fileUploadDto") FileUploadDto fileUploadDto) throws Exception {
         System.out.println("here");
-
         if (multipartFile.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "File is required"));
+            return ResponseEntity.badRequest().build();
         }
-
         if (!StringUtils.hasText(multipartFile.getOriginalFilename())
                 || !multipartFile.getOriginalFilename().toLowerCase().endsWith(".csv")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Only CSV files are supported"));
+            return ResponseEntity.badRequest().build();
         }
-
-        try {
-            Map<String, Object> response = fileUploadService.uploadFile(multipartFile, fileUploadDto.getUploadedBy(),fileUploadDto.getFileType());
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Failed to process file: " + e.getMessage()));
-        }
+        return ResponseEntity.ok(fileUploadService.uploadFile(multipartFile, fileUploadDto.getFileType()));
     }
 }

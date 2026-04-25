@@ -25,6 +25,9 @@ public class TenantUser extends BaseEntity {
     @JoinColumn(name = "system_user_id")
     private UserCredential systemUser;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
     @Column(nullable = false, name = "first_name")
     private String firstName;
 

@@ -8,5 +8,4 @@ import lombok.Setter;
 @Setter
 public class FileUploadDto {
     private FileType fileType;
-    private Long uploadedBy;
 }
