@@ -5,6 +5,7 @@ import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
+import com.tss.AmlSystem.repository.RuleQueryRepository;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -23,9 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
     private final AlertRepository alertRepository;
-    private final JdbcTemplate jdbcTemplate;
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final RuleQueryRepository ruleQueryRepository;
 
     @Override
     public void evaluate(RuleContext ruleContext) {
@@ -33,8 +32,8 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
 
         int timeWindowInDays=Integer.parseInt(params.get("time_window"));
         double multiplierThreshold=Double.parseDouble(params.get("income_multiplier_threshold"));
-        double minIncome=Double.parseDouble(params.get("min_income"));
-        double minTotalTxnAmount=Double.parseDouble(params.get("min_total_transaction_amount"));
+        BigDecimal minIncome=new BigDecimal(params.get("min_income"));
+        BigDecimal minTotalTxnAmount=new BigDecimal(params.get("min_total_transaction_amount"));
         int minTxnCount=Integer.parseInt(params.get("min_transaction_count"));
         int lookBackDays=Integer.parseInt(params.get("look_back_days"));
 
@@ -46,59 +45,27 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
         LocalDateTime windowStart=windowEnd.minusDays(timeWindowInDays);
         LocalDateTime lookBackStart=windowEnd.minusDays(lookBackDays);
 
-        String suspiciousCustomerQuery= """
-                SELECT td.client_number
-                FROM
-                
-                (SELECT c.client_number,c.monthly_income,
-                        c.profession_multiplier,
-                        t.amount,t.transaction_date FROM customers c
-                    JOIN accounts a ON c.client_number=a.client_number
-                    JOIN transactions t ON t.account_number=a.account_number
-                    WHERE t.transaction_type='CREDIT'
-                        AND t.transaction_date BETWEEN ? AND ?
-                ) AS td
-                
-                WHERE td.transaction_date BETWEEN ? AND ?
-                    AND td.monthly_income IS NOT NULL AND td.monthly_income >= ?
-                    GROUP BY td.client_number, td.monthly_income, td.profession_multiplier
-                    HAVING COUNT(*) >= ?
-                        AND SUM(td.amount) >= ?
-                        AND SUM(td.amount) > (td.monthly_income * td.profession_multiplier * ?)
-                """;
-
-        List<String> suspiciousClients=entityManager.createNativeQuery(suspiciousCustomerQuery)
-                .setParameter(1, lookBackStart)
-                .setParameter(2, windowEnd)
-                .setParameter(3, windowStart)
-                .setParameter(4, windowEnd)
-                .setParameter(5, minIncome)
-                .setParameter(6, minTxnCount)
-                .setParameter(7, minTotalTxnAmount)
-                .setParameter(8, multiplierThreshold)
-                .getResultList();
+        List<String> suspiciousClients=ruleQueryRepository.findIncomeMismatchClients(
+                lookBackStart,
+                windowEnd,
+                windowStart,
+                minIncome,
+                minTxnCount,
+                minTotalTxnAmount,
+                multiplierThreshold
+        );
 
         if(suspiciousClients.isEmpty())return;
 
         List<Alert> generatedAlerts=new ArrayList<>();
 
-        String txnFetchQuery= """
-                SELECT t.id,t.account_number,t.amount,t.transaction_date
-                FROM transactions t
-                JOIN accounts a ON t.account_number=a.account_number
-                WHERE a.client_number = ?
-                  AND t.transaction_type = 'CREDIT'
-                  AND t.transaction_date BETWEEN ? AND ?
-                ORDER BY t.transaction_date DESC
-                """;
-
         for(String client:suspiciousClients){
 
-            List<Object[]> results=entityManager.createNativeQuery(txnFetchQuery)
-                    .setParameter(1, client)
-                    .setParameter(2, windowStart)
-                    .setParameter(3, windowEnd)
-                    .getResultList();
+            List<Object[]> results=ruleQueryRepository.findFlaggedTransactionsForIncomeMismatch(
+                    client,
+                    windowStart,
+                    windowEnd
+            );
 
             List<Transaction> flaggedTxns=new ArrayList<>();
 
