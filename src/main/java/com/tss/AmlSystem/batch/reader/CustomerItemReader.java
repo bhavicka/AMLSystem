@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.batch.reader;
 
-import com.tss.AmlSystem.dto.request.CustomerDTO;
+import com.tss.AmlSystem.dto.request.CustomerBatchProcessDto;
 import com.tss.AmlSystem.utils.FileHeaders;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -18,11 +18,11 @@ public class CustomerItemReader {
 
     @Bean
     @StepScope
-    public FlatFileItemReader<CustomerDTO> customerReader(
+    public FlatFileItemReader<CustomerBatchProcessDto> customerReader(
             @Value("#{jobParameters['filePath']}") String filePath
     ) {
         Assert.hasText(filePath, "Job parameter 'filePath' is required");
-        return new FlatFileItemReaderBuilder<CustomerDTO>()
+        return new FlatFileItemReaderBuilder<CustomerBatchProcessDto>()
                 .name("customerCsvReader")
                 .resource(new FileSystemResource(filePath))
                 .strict(true)
@@ -30,7 +30,7 @@ public class CustomerItemReader {
                 .delimited()
                 .delimiter(",")
                 .names(FileHeaders.CUSTOMER_HEADER.toArray(new String[0]))
-                .targetType(CustomerDTO.class)
+                .targetType(CustomerBatchProcessDto.class)
                 .build();
     }
 }

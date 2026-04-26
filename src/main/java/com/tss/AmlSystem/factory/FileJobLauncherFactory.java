@@ -1,6 +1,7 @@
-package com.tss.AmlSystem.strategy;
+package com.tss.AmlSystem.factory;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.strategy.batch.joblaunch.FileJobLauncher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 @Service
 public class FileJobLauncherFactory {
 
-    private final Map<FileType,FileJobLauncher> launcherMap;
+    private final Map<FileType, FileJobLauncher> launcherMap;
 
     public FileJobLauncherFactory(List<FileJobLauncher> launchers) {
         this.launcherMap = launchers.stream()

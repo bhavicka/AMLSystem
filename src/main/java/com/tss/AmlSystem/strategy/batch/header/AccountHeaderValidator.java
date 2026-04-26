@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.strategy;
+package com.tss.AmlSystem.strategy.batch.header;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
 import com.tss.AmlSystem.utils.FileHeaders;
@@ -12,11 +12,11 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class CustomerHeaderValidator implements FileHeaderValidator{
+public class AccountHeaderValidator implements FileHeaderValidator {
 
     @Override
     public FileType getFileType() {
-        return FileType.CUSTOMERS;
+        return FileType.ACCOUNTS;
     }
 
     @Override
@@ -34,10 +34,10 @@ public class CustomerHeaderValidator implements FileHeaderValidator{
                     .map(String::trim)
                     .toList();
 
-            List<String> expectedHeaders = FileHeaders.CUSTOMER_HEADER;
+            List<String> expectedHeaders = FileHeaders.ACCOUNT_HEADER;
 
             if (!actualHeaders.equals(expectedHeaders)) {
-                throw new IllegalArgumentException("Invalid CUSTOMER file headers");
+                throw new IllegalArgumentException("Invalid ACCOUNT file headers");
             }
         }
     }

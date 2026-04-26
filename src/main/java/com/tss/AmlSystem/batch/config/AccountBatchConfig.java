@@ -10,8 +10,8 @@ import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.Step;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +19,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableJdbcJobRepository
-public class CustomerBatchConfig {
+public class AccountBatchConfig {
     @Bean
     public Step customerProcessingStep(
             JobRepository jobRepository,
@@ -28,7 +28,7 @@ public class CustomerBatchConfig {
             CustomerItemProcessor processor,
             CustomerItemWriter writer
     ) {
-        return new StepBuilder("customerProcessingStep", jobRepository)
+        return new StepBuilder("accountProcessingStep", jobRepository)
                 .<CustomerBatchProcessDto, Customer>chunk(1000)
                 .transactionManager(transactionManager)
                 .reader(reader)
@@ -39,14 +39,14 @@ public class CustomerBatchConfig {
     }
 
     @Bean
-    public Job customerImportJob(
+    public Job accountImportJob(
             JobRepository jobRepository,
-            Step customerProcessingStep,
+            Step accountProcessingStep,
             FileJobExecutionListener listener
     ) {
-        return new JobBuilder("customerImportJob", jobRepository)
+        return new JobBuilder("accountImportJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .start(customerProcessingStep)
+                .start(accountProcessingStep)
                 .listener(listener)
                 .build();
     }

@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.strategy;
+package com.tss.AmlSystem.strategy.batch.header;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
 import org.springframework.web.multipart.MultipartFile;

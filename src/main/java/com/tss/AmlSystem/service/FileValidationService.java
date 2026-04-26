@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.service;
 
-import com.tss.AmlSystem.dto.request.CustomerDTO;
+import com.tss.AmlSystem.dto.request.AccountBatchProcessDto;
+import com.tss.AmlSystem.dto.request.CustomerBatchProcessDto;
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
 import com.tss.AmlSystem.entity.tenant.File;
@@ -15,7 +16,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,12 +23,10 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class FileValidationService {
 
-
     private final FileRepository fileRepository;
     private final FileValidationErrorsRepository fileValidationErrorsRepository;
 
-
-    public List<FileValidationErrors> validateCustomer(CustomerDTO dto, File file, int rowNumber) {
+    public List<FileValidationErrors> validateCustomer(CustomerBatchProcessDto dto, File file, int rowNumber) {
         List<FileValidationErrors> errors = new ArrayList<>();
 
         validateRequired(dto.getClientNumber(), "client_number", "Client number is required", file, rowNumber, errors);
@@ -130,7 +128,7 @@ public class FileValidationService {
         try {
             number = new BigDecimal(value.trim());
             if(number.compareTo(BigDecimal.ZERO) < 0) {
-                errors.add(buildError(file, rowNumber, field,  "Monthly income cannot be negative"));
+                errors.add(buildError(file, rowNumber, field,  "Value cannot be negative"));
             }
         } catch (NumberFormatException ex) {
             errors.add(buildError(file, rowNumber, field, message));

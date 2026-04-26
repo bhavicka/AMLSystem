@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.strategy;
+package com.tss.AmlSystem.strategy.batch.joblaunch;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
 import com.tss.AmlSystem.service.BatchJobLauncherService;

@@ -3,7 +3,7 @@ package com.tss.AmlSystem.dto.request;
 import lombok.Data;
 
 @Data
-public class CustomerDTO {
+public class CustomerBatchProcessDto {
     private String clientNumber;
     private String firstName;
     private String lastName;

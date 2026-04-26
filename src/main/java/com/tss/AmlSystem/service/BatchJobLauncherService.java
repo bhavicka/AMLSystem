@@ -18,11 +18,14 @@ public class BatchJobLauncherService {
 
     private final JobLauncher jobLauncher;
     private final Job customerImportJob;
+    private final Job accountImportJob;
 
     public BatchJobLauncherService(JobLauncher jobLauncher, 
-                                   @Qualifier("customerImportJob") Job customerImportJob) {
+                                   @Qualifier("customerImportJob") Job customerImportJob,
+                                   @Qualifier("accountImportJob") Job accountImportJob) {
         this.jobLauncher = jobLauncher;
         this.customerImportJob = customerImportJob;
+        this.accountImportJob = accountImportJob;
     }
 
     @Async
@@ -34,5 +37,16 @@ public class BatchJobLauncherService {
                 .addLong("startTime", System.currentTimeMillis())
                 .toJobParameters();
         jobLauncher.run(customerImportJob, params);
+    }
+
+    @Async
+    public void launchAccountJob(String filePath, Long fileId, String tenant) throws Exception {
+        JobParameters params = new JobParametersBuilder()
+                .addString("filePath", filePath)
+                .addLong("fileId", fileId)
+                .addString("tenant", tenant)
+                .addLong("startTime", System.currentTimeMillis())
+                .toJobParameters();
+        jobLauncher.run(accountImportJob, params);
     }
 }

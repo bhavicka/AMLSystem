@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.batch.processor;
 
-import com.tss.AmlSystem.dto.request.CustomerDTO;
+import com.tss.AmlSystem.dto.request.CustomerBatchProcessDto;
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
 import com.tss.AmlSystem.entity.tenant.Customer;
@@ -24,7 +24,7 @@ import java.util.Locale;
 @Component
 @RequiredArgsConstructor
 @StepScope
-public class CustomerItemProcessor implements ItemProcessor<CustomerDTO, Customer>, StepExecutionListener {
+public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcessDto, Customer>, StepExecutionListener {
 
     private final FileValidationService fileValidationService;
 
@@ -37,7 +37,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerDTO, Custome
     }
 
     @Override
-    public Customer process(CustomerDTO dto) {
+    public Customer process(CustomerBatchProcessDto dto) {
         int rowNumber = currentRowNumber();
         List<FileValidationErrors> errors = fileValidationService.validateCustomer(dto, fileEntity, rowNumber);
 
@@ -54,7 +54,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerDTO, Custome
         return (int)(stepExecution.getReadCount() + 1);
     }
 
-    private Customer convertToEntity(CustomerDTO dto) {
+    private Customer convertToEntity(CustomerBatchProcessDto dto) {
         Customer customer = new Customer();
         customer.setClientNumber(dto.getClientNumber().trim());
         customer.setFirstName(dto.getFirstName().trim());

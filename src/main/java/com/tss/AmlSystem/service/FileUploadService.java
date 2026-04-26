@@ -8,12 +8,10 @@ import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.FileRepository;
 import com.tss.AmlSystem.repository.TenantUserRepository;
-import com.tss.AmlSystem.repository.UserCredentialRepository;
-import com.tss.AmlSystem.strategy.FileHeaderValidator;
-import com.tss.AmlSystem.strategy.FileHeaderValidatorFactory;
-import com.tss.AmlSystem.strategy.FileJobLauncher;
-import com.tss.AmlSystem.strategy.FileJobLauncherFactory;
-import jakarta.persistence.EntityNotFoundException;
+import com.tss.AmlSystem.strategy.batch.header.FileHeaderValidator;
+import com.tss.AmlSystem.factory.FileHeaderValidatorFactory;
+import com.tss.AmlSystem.strategy.batch.joblaunch.FileJobLauncher;
+import com.tss.AmlSystem.factory.FileJobLauncherFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,9 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -41,6 +38,11 @@ public class FileUploadService {
     private final FileHeaderValidatorFactory validatorFactory;
 
     public FileUploadProcessDto uploadFile(MultipartFile multipartFile, FileType fileType) throws Exception {
+        String fileHash = calculateFileHash(multipartFile);
+        fileRepository.findByFileHash(fileHash).ifPresent(existingFile -> {
+            throw new RuntimeException("Duplicate file upload detected: " + existingFile.getFileName());
+        });
+
         String tenant = TenantContext.getCurrentTenant();
         System.out.println(tenant);
 
@@ -65,6 +67,7 @@ public class FileUploadService {
         file.setTotalRecords(totalRows);
         file.setStatus(FileStatus.UPLOADED);
         file.setCreatedAt(LocalDateTime.now());
+        file.setFileHash(fileHash);
         file = fileRepository.save(file);
 
         System.out.println("file stored");
@@ -100,5 +103,17 @@ public class FileUploadService {
                     .count();
             return Math.toIntExact(count);
         }
+    }
+
+    private String calculateFileHash(MultipartFile file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(file.getBytes());
+
+        // Convert bytes to hex string
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

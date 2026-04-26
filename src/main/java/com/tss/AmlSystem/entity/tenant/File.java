@@ -53,6 +53,9 @@ public class File extends BaseEntity {
     @Column(nullable = false, name = "file_type", columnDefinition = "file_type")
     private FileType fileType;
 
+    @Column(nullable = false, unique = true, name = "file_hash")
+    private String fileHash;
+
     @Column(nullable = false, name = "is_removed")
     @ColumnDefault("FALSE")
     private Boolean isRemoved = false;

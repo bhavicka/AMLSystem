@@ -74,6 +74,7 @@ CREATE TABLE files(
                       total_records INTEGER NOT NULL,
                       status file_status NOT NULL DEFAULT 'UPLOADED',
                       file_type file_type NOT NULL,
+                      file_hash VARCHAR(64) NOT NULL,
                       is_removed BOOLEAN DEFAULT FALSE,
                       is_deleted BOOLEAN DEFAULT FALSE,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
