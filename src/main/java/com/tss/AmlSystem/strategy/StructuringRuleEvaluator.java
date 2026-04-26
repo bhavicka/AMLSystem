@@ -6,10 +6,13 @@ import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,6 +25,8 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
 
     private final AlertRepository alertRepository;
     private final JdbcTemplate jdbcTemplate;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public void evaluate(RuleContext ruleContext) {
@@ -42,7 +47,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
         LocalDateTime windowStart = windowEnd.minusDays(timeWindowInDays);
         LocalDateTime lookBackStart = windowEnd.minusDays(lookBackDays);
 
-        System.out.println(jdbcTemplate.queryForObject("SHOW search_path", String.class));
+//        System.out.println(jdbcTemplate.queryForObject("SHOW search_path", String.class));
 
         String suspiciousClientsQuery = """
                 SELECT td.client_number
@@ -62,17 +67,15 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
                    AND SUM(td.amount) > ?
                 """;
 
-        List<String> suspiciousClients = jdbcTemplate.queryForList(
-                suspiciousClientsQuery,
-                String.class,
-                lookBackStart,
-                windowEnd,
-                windowStart,
-                windowEnd,
-                perTxnThreshold,
-                minimumTxns,
-                totalThreshold
-        );
+        List<String> suspiciousClients = entityManager.createNativeQuery(suspiciousClientsQuery)
+                .setParameter(1, lookBackStart)
+                .setParameter(2, windowEnd)
+                .setParameter(3, windowStart)
+                .setParameter(4, windowEnd)
+                .setParameter(5, perTxnThreshold)
+                .setParameter(6, minimumTxns)
+                .setParameter(7, totalThreshold)
+                .getResultList();
 
         if (suspiciousClients.isEmpty()) return;
 
@@ -91,21 +94,22 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
 
         for (String client : suspiciousClients) {
 
-            List<Transaction> flaggedTxns = jdbcTemplate.query(
-                    txnFetchQuery,
-                    (rs, rowNum) -> {
-                        Transaction t = new Transaction();
-                        t.setId(rs.getLong("id"));
-                        t.setAccountNumber(rs.getString("account_number"));
-                        t.setAmount(rs.getBigDecimal("amount"));
-                        t.setTransactionDate(rs.getObject("transaction_date", LocalDate.class));
-                        return t;
-                    },
-                    client,
-                    perTxnThreshold,
-                    windowStart,
-                    windowEnd
-            );
+            List<Object[]> results = entityManager.createNativeQuery(txnFetchQuery)
+                    .setParameter(1, client)
+                    .setParameter(2, perTxnThreshold)
+                    .setParameter(3, windowStart)
+                    .setParameter(4, windowEnd)
+                    .getResultList();
+
+            List<Transaction> flaggedTxns = new ArrayList<>();
+            for (Object[] row : results) {
+                Transaction t = new Transaction();
+                t.setId(((Number) row[0]).longValue());
+                t.setAccountNumber((String) row[1]);
+                t.setAmount((BigDecimal) row[2]);
+                t.setTransactionDate((LocalDate) row[3]);
+                flaggedTxns.add(t);
+            }
 
             if (flaggedTxns.isEmpty()) continue;
 

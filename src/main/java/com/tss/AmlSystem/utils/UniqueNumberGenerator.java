@@ -5,7 +5,7 @@ public class UniqueNumberGenerator {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder sb = new StringBuilder("AL-");
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 4; i++) {
             int index = (int) (Math.random() * chars.length());
             sb.append(chars.charAt(index));
         }

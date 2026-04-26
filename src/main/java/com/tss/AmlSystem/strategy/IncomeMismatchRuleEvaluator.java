@@ -6,10 +6,13 @@ import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +24,8 @@ import java.util.Map;
 public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
     private final AlertRepository alertRepository;
     private final JdbcTemplate jdbcTemplate;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public void evaluate(RuleContext ruleContext) {
@@ -46,7 +51,7 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
                 FROM
                 
                 (SELECT c.client_number,c.monthly_income,
-                        c.professional_multiplier,
+                        c.profession_multiplier,
                         t.amount,t.transaction_date FROM customers c
                     JOIN accounts a ON c.client_number=a.client_number
                     JOIN transactions t ON t.account_number=a.account_number
@@ -56,24 +61,22 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
                 
                 WHERE td.transaction_date BETWEEN ? AND ?
                     AND td.monthly_income IS NOT NULL AND td.monthly_income >= ?
-                    GROUP BY td.client_number, td.monthly_income, td.professional_multiplier
+                    GROUP BY td.client_number, td.monthly_income, td.profession_multiplier
                     HAVING COUNT(*) >= ?
                         AND SUM(td.amount) >= ?
-                        AND SUM(td.amount) > (td.monthly_income * td.professional_multiplier * ?)
+                        AND SUM(td.amount) > (td.monthly_income * td.profession_multiplier * ?)
                 """;
 
-        List<String> suspiciousClients=jdbcTemplate.queryForList(
-                suspiciousCustomerQuery,
-                String.class,
-                lookBackStart,
-                windowEnd,
-                windowStart,
-                windowEnd,
-                minIncome,
-                minTxnCount,
-                minTotalTxnAmount,
-                multiplierThreshold
-        );
+        List<String> suspiciousClients=entityManager.createNativeQuery(suspiciousCustomerQuery)
+                .setParameter(1, lookBackStart)
+                .setParameter(2, windowEnd)
+                .setParameter(3, windowStart)
+                .setParameter(4, windowEnd)
+                .setParameter(5, minIncome)
+                .setParameter(6, minTxnCount)
+                .setParameter(7, minTotalTxnAmount)
+                .setParameter(8, multiplierThreshold)
+                .getResultList();
 
         if(suspiciousClients.isEmpty())return;
 
@@ -91,20 +94,23 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
 
         for(String client:suspiciousClients){
 
-            List<Transaction> flaggedTxns=jdbcTemplate.query(
-                    txnFetchQuery,
-                    (rs, rowNum) -> {
-                        Transaction t=new Transaction();
-                        t.setId(rs.getLong("id"));
-                        t.setAccountNumber(rs.getString("account_number"));
-                        t.setAmount(rs.getBigDecimal("amount"));
-                        t.setTransactionDate(rs.getObject("transaction_date", LocalDate.class));
-                        return t;
-                    },
-                    client,
-                    windowStart,
-                    windowEnd
-            );
+            List<Object[]> results=entityManager.createNativeQuery(txnFetchQuery)
+                    .setParameter(1, client)
+                    .setParameter(2, windowStart)
+                    .setParameter(3, windowEnd)
+                    .getResultList();
+
+            List<Transaction> flaggedTxns=new ArrayList<>();
+
+            for(Object[] row:results){
+                Transaction txn=new Transaction();
+                txn.setId(((Number)row[0]).longValue());
+                txn.setAccountNumber((String)row[1]);
+                txn.setAmount((BigDecimal) row[2]);
+                txn.setTransactionDate(((LocalDate)row[3]));
+
+                flaggedTxns.add(txn);
+            }
 
             if(flaggedTxns.isEmpty())continue;
 
