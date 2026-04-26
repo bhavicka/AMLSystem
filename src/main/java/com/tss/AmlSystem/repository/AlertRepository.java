@@ -65,6 +65,20 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
 """)
     List<Transaction> findTransactionsByAlertId(Long alertId);
 
+
+    @Query("""
+           SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
+           FROM Alert a
+           WHERE a.clientNumber = :clientNumber
+             AND a.tenantRule = :rule
+             AND a.createdAt > :since
+           """)
+    boolean existsByClientNumberAndTenantRuleAndWindowStart(
+            @Param("clientNumber") String clientNumber,
+            @Param("rule") TenantRule rule,
+            @Param("since") LocalDateTime since
+    );
+
 //    @Query(value = """
 //    SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
 //    FROM alerts a

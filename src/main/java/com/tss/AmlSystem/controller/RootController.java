@@ -6,6 +6,7 @@ import com.tss.AmlSystem.service.TenantSchemaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,9 +28,9 @@ public class RootController {
     }
 
     @PostMapping("/run-engine")
-    public ResponseEntity<String> runEngine(@RequestParam("lookBackDays") int lookBackDays){
-        LocalDate lookBackDate = LocalDate.now().minusDays(lookBackDays);
-        ruleEngineService.execute(lookBackDate);
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<String> runEngine(){
+        ruleEngineService.execute();
         return new ResponseEntity<>("Rule engine executed", HttpStatus.OK);
     }
 }

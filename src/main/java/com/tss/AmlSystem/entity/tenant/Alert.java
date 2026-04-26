@@ -40,4 +40,7 @@ public class Alert extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "transaction_id")
     )
     private List<Transaction> transactions;
+
+    @Column(name = "client_number",nullable = false)
+    private String clientNumber;
 }

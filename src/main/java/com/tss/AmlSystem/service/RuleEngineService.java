@@ -14,11 +14,11 @@ public class RuleEngineService {
     private final TenantRuleRepository tenantRuleRepository;
     private final RuleExecutionService executionService;
 
-    public void execute(LocalDate lookBackDate){
+    public void execute(){
         List<TenantRule> activeRules=tenantRuleRepository.findByIsActiveTrue();
 //        System.out.println(activeRules);
         for(TenantRule rule:activeRules){
-            executionService.runRule(rule,lookBackDate);
+            executionService.runRule(rule);
         }
 
     }
