@@ -42,6 +42,8 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
         LocalDateTime windowStart = windowEnd.minusDays(timeWindowInDays);
         LocalDateTime lookBackStart = windowEnd.minusDays(lookBackDays);
 
+        System.out.println(jdbcTemplate.queryForObject("SHOW search_path", String.class));
+
         String suspiciousClientsQuery = """
                 SELECT td.client_number
                 FROM (

@@ -30,6 +30,7 @@ public class RootController {
     @PostMapping("/run-engine")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<String> runEngine(){
+        System.out.println("schema "+TenantContext.getCurrentTenant());
         ruleEngineService.execute();
         return new ResponseEntity<>("Rule engine executed", HttpStatus.OK);
     }

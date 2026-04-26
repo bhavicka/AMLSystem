@@ -18,13 +18,13 @@ public class AlertController {
     private final AlertService alertService;
 
     @GetMapping("/alerts")
-//    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<AlertDashboardDto> getAlertDashboard(){
         return ResponseEntity.ok(alertService.getAlertDashboard());
     }
 
     @GetMapping("/alerts/{alertId}")
-//    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<AlertDetailDto> getAlertDetail(@PathVariable Long alertId){
         return ResponseEntity.ok(alertService.getAlertDetail(alertId));
     }
