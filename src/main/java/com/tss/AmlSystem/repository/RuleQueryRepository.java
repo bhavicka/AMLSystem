@@ -1,6 +1,9 @@
 package com.tss.AmlSystem.repository;
 
+import com.tss.AmlSystem.entity.tenant.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -9,31 +12,50 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface RuleQueryRepository {
+public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
     @Query(value = """
-        SELECT td.client_number
-        FROM (
-            SELECT a.client_number,
-                   t.amount,
-                   t.transaction_date
-            FROM transactions t
-            JOIN accounts a ON t.account_number = a.account_number
-            WHERE t.transaction_type = 'CREDIT'
-              AND t.transaction_date BETWEEN :lookBackStart AND :windowEnd
-        ) AS td
-        WHERE td.transaction_date BETWEEN :windowStart AND :windowEnd
-          AND td.amount < :perTxnThreshold
-        GROUP BY td.client_number
-        HAVING COUNT(*) >= :minimumTxns
-           AND SUM(td.amount) > :totalThreshold
-        """, nativeQuery = true)
-    List<String> findSuspiciousClientsForStructuring(
-            LocalDateTime lookBackStart,
-            LocalDateTime windowEnd,
-            LocalDateTime windowStart,
-            BigDecimal perTxnThreshold,
-            int minimumTxns,
-            BigDecimal totalThreshold
+    SELECT 
+        client_number,
+        CAST(transaction_date AS DATE) AS window_end,
+        CAST(transaction_date - INTERVAL '1 day' * :timeWindowInDays AS DATE) AS window_start
+    FROM (
+        SELECT 
+            a.client_number,
+            t.transaction_date,
+
+            SUM(t.amount) OVER (
+                PARTITION BY a.client_number
+                ORDER BY t.transaction_date
+                RANGE BETWEEN (:timeWindowInDays * INTERVAL '1 day') PRECEDING AND CURRENT ROW
+            ) AS window_sum,
+
+            COUNT(*) OVER (
+                PARTITION BY a.client_number
+                ORDER BY t.transaction_date
+                RANGE BETWEEN (:timeWindowInDays * INTERVAL '1 day') PRECEDING AND CURRENT ROW
+            ) AS window_count,
+
+            t.amount
+
+        FROM transactions t
+        JOIN accounts a ON t.account_number = a.account_number
+
+        WHERE t.transaction_type = 'CREDIT'
+          AND t.transaction_date BETWEEN :lookBackStart AND :windowEnd
+          AND t.amount < :perTxnThreshold
+
+    ) sub
+
+    WHERE window_count >= :minimumTxns
+      AND window_sum > :totalThreshold
+""", nativeQuery = true)
+    List<Object[]> findStructuringSlidingWindow(
+            @Param("lookBackStart") LocalDateTime lookBackStart,
+            @Param("windowEnd") LocalDateTime windowEnd,
+            @Param("perTxnThreshold") BigDecimal perTxnThreshold,
+            @Param("minimumTxns") int minimumTxns,
+            @Param("totalThreshold") BigDecimal totalThreshold,
+            @Param("timeWindowInDays") int timeWindowInDays
     );
 
     @Query(value = """
@@ -53,41 +75,57 @@ public interface RuleQueryRepository {
     List<Object[]> findFlaggedTransactionsForStructuring(
             String client,
             BigDecimal perTxnThreshold,
-            LocalDateTime windowStart,
-            LocalDateTime windowEnd
+            LocalDate windowStart,
+            LocalDate windowEnd
     );
 
 
     @Query(value = """
-        SELECT td.client_number
+        SELECT client_number,
+                CAST(transaction_date AS DATE) AS window_end,
+                CAST(transaction_date - INTERVAL '1 day' * :timeWindowInDays AS DATE) AS window_start
         FROM (
-            SELECT c.client_number,
-                   c.monthly_income,
-                   c.profession_multiplier,
-                   t.amount,
-                   t.transaction_date
+            SELECT 
+                c.client_number,t.transaction_date,
+
+                SUM(t.amount) OVER (
+                    PARTITION BY c.client_number
+                    ORDER BY t.transaction_date
+                    RANGE BETWEEN (:timeWindowInDays * INTERVAL '1 day') PRECEDING AND CURRENT ROW
+                ) AS window_sum,
+
+                COUNT(*) OVER (
+                    PARTITION BY c.client_number
+                    ORDER BY t.transaction_date
+                    RANGE BETWEEN (:timeWindowInDays * INTERVAL '1 day') PRECEDING AND CURRENT ROW
+                ) AS window_count,
+
+                c.monthly_income,
+                c.profession_multiplier
+
             FROM customers c
             JOIN accounts a ON c.client_number = a.client_number
             JOIN transactions t ON t.account_number = a.account_number
+
             WHERE t.transaction_type = 'CREDIT'
               AND t.transaction_date BETWEEN :lookBackStart AND :windowEnd
-        ) AS td
-        WHERE td.transaction_date BETWEEN :windowStart AND :windowEnd
-          AND td.monthly_income IS NOT NULL
-          AND td.monthly_income >= :minIncome
-        GROUP BY td.client_number, td.monthly_income, td.profession_multiplier
-        HAVING COUNT(*) >= :minTxnCount
-           AND SUM(td.amount) >= :minTotalTxnAmount
-           AND SUM(td.amount) > (td.monthly_income * td.profession_multiplier * :multiplierThreshold)
+              AND c.monthly_income IS NOT NULL
+              AND c.monthly_income >= :minIncome
+
+        ) sub
+
+        WHERE window_count >= :minTxnCount
+          AND window_sum >= :minTotalTxnAmount
+          AND window_sum > (monthly_income * profession_multiplier * :multiplierThreshold)
         """, nativeQuery = true)
-    List<String> findIncomeMismatchClients(
-            LocalDateTime lookBackStart,
-            LocalDateTime windowEnd,
-            LocalDateTime windowStart,
-            BigDecimal minIncome,
-            int minTxnCount,
-            BigDecimal minTotalTxnAmount,
-            double multiplierThreshold
+    List<Object[]> findIncomeMismatchSlidingWindow(
+            @Param("lookBackStart") LocalDateTime lookBackStart,
+            @Param("windowEnd") LocalDateTime windowEnd,
+            @Param("minIncome") BigDecimal minIncome,
+            @Param("minTxnCount") int minTxnCount,
+            @Param("minTotalTxnAmount") BigDecimal minTotalTxnAmount,
+            @Param("multiplierThreshold") double multiplierThreshold,
+            @Param("timeWindowInDays") int timeWindowInDays
     );
 
 
@@ -102,8 +140,8 @@ public interface RuleQueryRepository {
     """,nativeQuery = true)
     List<Object[]> findFlaggedTransactionsForIncomeMismatch(
             String clientNumber,
-            LocalDateTime windowStart,
-            LocalDateTime windowEnd
+            LocalDate windowStart,
+            LocalDate windowEnd
     );
 
 

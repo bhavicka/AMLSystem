@@ -14,9 +14,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,59 +43,71 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
             throw new IllegalArgumentException("Time window cannot be greater than look back days");
         }
 
-        LocalDateTime windowEnd=LocalDateTime.now();
-        LocalDateTime windowStart=windowEnd.minusDays(timeWindowInDays);
-        LocalDateTime lookBackStart=windowEnd.minusDays(lookBackDays);
+        LocalDateTime lookBackStart=LocalDateTime.now().minusDays(lookBackDays);
 
-        List<String> suspiciousClients=ruleQueryRepository.findIncomeMismatchClients(
+        List<Object[]> suspiciousClientsWithRange=ruleQueryRepository.findIncomeMismatchSlidingWindow(
                 lookBackStart,
-                windowEnd,
-                windowStart,
+                LocalDateTime.now(),
                 minIncome,
                 minTxnCount,
                 minTotalTxnAmount,
-                multiplierThreshold
+                multiplierThreshold,
+                timeWindowInDays
         );
 
-        if(suspiciousClients.isEmpty())return;
+        if(suspiciousClientsWithRange.isEmpty())return;
+        Map<String, List<Transaction>> clientTxnMap = new HashMap<>();
 
-        List<Alert> generatedAlerts=new ArrayList<>();
 
-        for(String client:suspiciousClients){
 
-            List<Object[]> results=ruleQueryRepository.findFlaggedTransactionsForIncomeMismatch(
+        for(Object obj:suspiciousClientsWithRange) {
+
+            String client = (String) ((Object[]) obj)[0];
+            LocalDate windowEnd = (LocalDate) ((Object[]) obj)[1];
+            LocalDate windowStart = (LocalDate) ((Object[]) obj)[2];
+
+            List<Object[]> results = ruleQueryRepository.findFlaggedTransactionsForIncomeMismatch(
                     client,
                     windowStart,
                     windowEnd
             );
 
-            List<Transaction> flaggedTxns=new ArrayList<>();
-
-            for(Object[] row:results){
-                Transaction txn=new Transaction();
-                txn.setId(((Number)row[0]).longValue());
-                txn.setAccountNumber((String)row[1]);
+            for (Object[] row : results) {
+                Transaction txn = new Transaction();
+                txn.setId(((Number) row[0]).longValue());
+                txn.setAccountNumber((String) row[1]);
                 txn.setAmount((BigDecimal) row[2]);
-                txn.setTransactionDate(((LocalDate)row[3]));
+                txn.setTransactionDate((LocalDate) row[3]);
 
-                flaggedTxns.add(txn);
+                clientTxnMap
+                        .computeIfAbsent(client, k -> new ArrayList<>())
+                        .add(txn);
             }
 
-            if(flaggedTxns.isEmpty())continue;
+        }
 
-            boolean exists=alertRepository.existsByClientNumberAndTenantRuleAndWindowStart(
+        if(clientTxnMap.isEmpty())return;
+        List<Alert> generatedAlerts=new ArrayList<>();
+
+        for(Map.Entry<String,List<Transaction>> entry: clientTxnMap.entrySet()) {
+            String client = entry.getKey();
+            List<Transaction> transactions = entry.getValue();
+
+
+            boolean exists = alertRepository.existsByClientNumberAndTenantRuleIdAndCreatedAfter(
                     client,
-                    ruleContext.getTenantRule(),
-                    windowStart
+                    ruleContext.getTenantRule().getId(),
+                    lookBackStart
             );
 
-            if(exists)continue;
+            if (exists) continue;
 
-            Alert alert=new Alert();
+            Alert alert = new Alert();
             alert.setClientNumber(client);
             alert.setTenantRule(ruleContext.getTenantRule());
             alert.setStatus(AlertStatus.NEW);
-            alert.setTransactions(flaggedTxns);
+            alert.setTransactions(transactions);
+            alert.setCreatedAt(LocalDateTime.now());
             alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
 
             generatedAlerts.add(alert);

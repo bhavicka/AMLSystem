@@ -15,9 +15,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,49 +45,64 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             throw new IllegalArgumentException("Time window cannot be greater than look back days");
         }
 
-        LocalDateTime windowEnd   = LocalDateTime.now();
-        LocalDateTime windowStart = windowEnd.minusDays(timeWindowInDays);
-        LocalDateTime lookBackStart = windowEnd.minusDays(lookBackDays);
+        LocalDateTime lookBackStart = LocalDateTime.now().minusDays(lookBackDays);
 
-        List<String> suspiciousClients = ruleQueryRepository.findSuspiciousClientsForStructuring(
+        List<Object[]> suspiciousClientsWithRange = ruleQueryRepository.findStructuringSlidingWindow(
                 lookBackStart,
-                windowEnd,
-                windowStart,
+                LocalDateTime.now(),
                 perTxnThreshold,
                 minimumTxns,
-                totalThreshold
+                totalThreshold,
+                timeWindowInDays
         );
 
-        if (suspiciousClients.isEmpty()) return;
+        if (suspiciousClientsWithRange.isEmpty()) return;
+        Map<String,List<Transaction>> clientTxnMap=new HashMap<>();
+
+
+        for (Object[] obj : suspiciousClientsWithRange) {
+
+            String client = (String) obj[0];
+            LocalDate windowEnd = ((LocalDate) obj[1]);
+            LocalDate windowStart = ((LocalDate) obj[2]);
+
+            List<Object[]> results =
+                    ruleQueryRepository.findFlaggedTransactionsForStructuring(
+                            client,
+                            perTxnThreshold,
+                            windowStart,
+                            windowEnd
+                    );
+
+            for (Object[] row : results) {
+
+                Transaction txn = new Transaction();
+                txn.setId(((Number) row[0]).longValue());
+                txn.setAccountNumber((String) row[1]);
+                txn.setAmount((BigDecimal) row[2]);
+                txn.setTransactionDate((LocalDate) row[3]);
+
+                clientTxnMap
+                        .computeIfAbsent(client, k -> new ArrayList<>())
+                        .add(txn);
+            }
+        }
+
+        if(clientTxnMap.isEmpty())return;
 
         List<Alert> generatedAlerts = new ArrayList<>();
 
-        for (String client : suspiciousClients) {
+        for (Map.Entry<String, List<Transaction>> entry : clientTxnMap.entrySet()) {
 
-            List<Object[]> results = ruleQueryRepository.findFlaggedTransactionsForStructuring(
-                    client,
-                    perTxnThreshold,
-                    windowStart,
-                    windowEnd
-            );
+            String client = entry.getKey();
+            List<Transaction> transactions = entry.getValue();
 
-            List<Transaction> flaggedTxns = new ArrayList<>();
-            for (Object[] row : results) {
-                Transaction t = new Transaction();
-                t.setId((Long) row[0]);
-                t.setAccountNumber((String) row[1]);
-                t.setAmount((BigDecimal) row[2]);
-                t.setTransactionDate((LocalDate) row[3]);
-                flaggedTxns.add(t);
-            }
-
-            if (flaggedTxns.isEmpty()) continue;
-
-            boolean exists = alertRepository.existsByClientNumberAndTenantRuleAndWindowStart(
-                    client,
-                    ruleContext.getTenantRule(),
-                    windowStart
-            );
+            boolean exists = alertRepository
+                    .existsByClientNumberAndTenantRuleIdAndCreatedAfter(
+                            client,
+                            ruleContext.getTenantRule().getId(),
+                            lookBackStart
+                    );
 
             if (exists) continue;
 
@@ -93,7 +110,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             alert.setClientNumber(client);
             alert.setTenantRule(ruleContext.getTenantRule());
             alert.setStatus(AlertStatus.NEW);
-            alert.setTransactions(flaggedTxns);
+            alert.setTransactions(transactions);
             alert.setCreatedAt(LocalDateTime.now());
             alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
 
