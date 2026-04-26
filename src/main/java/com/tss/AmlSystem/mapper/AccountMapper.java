@@ -4,8 +4,18 @@ import com.tss.AmlSystem.dto.request.AccountBatchProcessDto;
 import com.tss.AmlSystem.entity.tenant.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import java.util.Locale;
+import com.tss.AmlSystem.entity.enums.tenant.AccountStatus;
+import com.tss.AmlSystem.entity.enums.tenant.AccountType;
+import org.springframework.context.annotation.Import;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+        componentModel = "spring",
+        imports = {AccountType.class,
+            AccountStatus.class,
+            Locale.class}
+)
+
 public interface AccountMapper {
 
     @Mapping(target = "clientNumber", expression = "java(processDto.clientNumber().trim())")

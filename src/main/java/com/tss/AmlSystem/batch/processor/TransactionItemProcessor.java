@@ -1,35 +1,34 @@
 package com.tss.AmlSystem.batch.processor;
 
-import com.tss.AmlSystem.dto.request.CustomerBatchProcessDto;
-import com.tss.AmlSystem.entity.enums.Severity;
+import com.tss.AmlSystem.dto.request.AccountBatchProcessDto;
+import com.tss.AmlSystem.dto.request.TransactionBatchProcessDto;
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
-import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
-import com.tss.AmlSystem.entity.tenant.Customer;
+import com.tss.AmlSystem.entity.tenant.Account;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.FileValidationErrors;
+import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.factory.FileValidatorFactory;
+import com.tss.AmlSystem.mapper.TransactionMapper;
 import com.tss.AmlSystem.strategy.batch.file.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.listener.StepExecutionListener;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.DataBinder;
 import org.springframework.validation.SmartValidator;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
 @StepScope
-public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcessDto, Customer>, StepExecutionListener {
+public class TransactionItemProcessor implements ItemProcessor<TransactionBatchProcessDto, Transaction>, StepExecutionListener {
+
+    private final TransactionMapper transactionMapper;
 
     private FileValidator fileValidator;
     private final SmartValidator smartValidator;
@@ -39,13 +38,13 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        fileValidator = factory.getValidator(FileType.CUSTOMERS);
+        fileValidator = factory.getValidator(FileType.TRANSACTIONS);
         Long fileId = stepExecution.getJobParameters().getLong("fileId");
         this.fileEntity = fileValidator.getFile(fileId);
     }
 
     @Override
-    public Customer process(CustomerBatchProcessDto dto) {
+    public Transaction process(TransactionBatchProcessDto dto) {
         int rowNumber = currentRowNumber();
 
         DataBinder binder = new DataBinder(dto);
@@ -57,37 +56,15 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
             handleValidationErrors(results, fileEntity, rowNumber);
             return null;
         }
-        Customer customer = convertToEntity(dto);
-        customer.setFile(fileEntity);
-        return customer;
+
+        Transaction transaction = transactionMapper.toTransaction(dto);
+        transaction.setFile(fileEntity);
+        return transaction;
     }
 
     private int currentRowNumber() {
         StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
         return (int)(stepExecution.getReadCount() + 1);
-    }
-
-    private Customer convertToEntity(CustomerBatchProcessDto dto) {
-        Customer customer = new Customer();
-        customer.setClientNumber(dto.getClientNumber().trim());
-        customer.setFirstName(dto.getFirstName().trim());
-        customer.setLastName(dto.getLastName().trim());
-        customer.setMiddleName(normalizeOptional(dto.getMiddleName()));
-        customer.setAadharNumber(dto.getAadharNumber().trim());
-        customer.setPan(dto.getPan().trim().toUpperCase(Locale.ROOT));
-        customer.setOccupation(dto.getOccupation().trim());
-        customer.setOccupationType(OccupationType.valueOf(dto.getOccupationType().trim().toUpperCase(Locale.ROOT)));
-        customer.setIsPep(Boolean.parseBoolean(dto.getIsPep().trim()));
-        customer.setRiskRate(Severity.valueOf(dto.getRiskRate().trim().toUpperCase(Locale.ROOT)));
-        customer.setMonthlyIncome(new BigDecimal(dto.getMonthlyIncome().trim()));
-        customer.setDob(LocalDate.parse(dto.getDob().trim()));
-
-        if (StringUtils.hasText(dto.getProfessionMultiplier())) {
-            customer.setProfessionMultiplier(new BigDecimal(dto.getProfessionMultiplier().trim()));
-        }
-
-        customer.setFamilyCode(normalizeOptional(dto.getFamilyCode()));
-        return customer;
     }
     private void handleValidationErrors(BindingResult results, File fileEntity, int rowNumber) {
         List<FileValidationErrors> errorList = results.getFieldErrors().stream()
@@ -103,7 +80,5 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
 
         fileValidator.saveValidationErrors(errorList);
     }
-    private String normalizeOptional(String value) {
-        return StringUtils.hasText(value) ? value.trim() : null;
-    }
 }
+

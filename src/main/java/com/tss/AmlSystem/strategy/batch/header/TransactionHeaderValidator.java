@@ -15,7 +15,7 @@ import java.util.List;
 public class TransactionHeaderValidator implements FileHeaderValidator {
     @Override
     public FileType getFileType() {
-        return FileType.CUSTOMERS;
+        return FileType.TRANSACTIONS;
     }
     @Override
     public void validate(MultipartFile file) throws IOException {
@@ -35,7 +35,7 @@ public class TransactionHeaderValidator implements FileHeaderValidator {
             List<String> expectedHeaders = FileHeaders.TRANSACTION_HEADER;
 
             if (!actualHeaders.equals(expectedHeaders)) {
-                throw new IllegalArgumentException("Invalid CUSTOMER file headers");
+                throw new IllegalArgumentException("Invalid TRANSACTIONS file headers");
             }
         }
     }

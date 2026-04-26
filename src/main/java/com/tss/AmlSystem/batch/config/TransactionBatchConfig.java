@@ -2,9 +2,13 @@ package com.tss.AmlSystem.batch.config;
 
 import com.tss.AmlSystem.batch.listener.FileJobExecutionListener;
 import com.tss.AmlSystem.batch.processor.AccountItemProcessor;
+import com.tss.AmlSystem.batch.processor.TransactionItemProcessor;
 import com.tss.AmlSystem.batch.writer.AccountItemWriter;
+import com.tss.AmlSystem.batch.writer.TransactionItemWriter;
 import com.tss.AmlSystem.dto.request.AccountBatchProcessDto;
+import com.tss.AmlSystem.dto.request.TransactionBatchProcessDto;
 import com.tss.AmlSystem.entity.tenant.Account;
+import com.tss.AmlSystem.entity.tenant.Transaction;
 import org.springframework.batch.core.configuration.annotation.EnableJdbcJobRepository;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -19,18 +23,18 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableJdbcJobRepository
-public class AccountBatchConfig {
+public class TransactionBatchConfig {
 
     @Bean
-    public Step accountProcessingStep(
+    public Step transactionProcessingStep(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            FlatFileItemReader<AccountBatchProcessDto> reader,
-            AccountItemProcessor processor,
-            AccountItemWriter writer
+            FlatFileItemReader<TransactionBatchProcessDto> reader,
+            TransactionItemProcessor processor,
+            TransactionItemWriter writer
     ) {
-        return new StepBuilder("accountProcessingStep", jobRepository)
-                .<AccountBatchProcessDto, Account>chunk(1000)
+        return new StepBuilder("transactionProcessingStep", jobRepository)
+                .<TransactionBatchProcessDto, Transaction>chunk(1000)
                 .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)
@@ -40,16 +44,15 @@ public class AccountBatchConfig {
     }
 
     @Bean
-    public Job accountImportJob(
+    public Job transactionImportJob(
             JobRepository jobRepository,
-            Step accountProcessingStep,
+            Step transactionProcessingStep,
             FileJobExecutionListener listener
     ) {
-        return new JobBuilder("accountImportJob", jobRepository)
+        return new JobBuilder("transactionImportJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .start(accountProcessingStep)
+                .start(transactionProcessingStep)
                 .listener(listener)
                 .build();
-
     }
 }
