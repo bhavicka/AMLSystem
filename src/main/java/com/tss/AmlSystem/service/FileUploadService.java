@@ -27,12 +27,17 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import com.tss.AmlSystem.entity.tenant.FileValidationErrors;
+import com.tss.AmlSystem.repository.FileValidationErrorsRepository;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FileUploadService {
 
     private final FileRepository fileRepository;
     private final TenantUserRepository tenantUserRepository;
+    private final FileValidationErrorsRepository fileValidationErrorsRepository;
 
     private final FileJobLauncherFactory launcherFactory;
     private final FileHeaderValidatorFactory validatorFactory;
@@ -44,14 +49,8 @@ public class FileUploadService {
         });
 
         String tenant = TenantContext.getCurrentTenant();
-        System.out.println(tenant);
 
-        FileHeaderValidator validator = validatorFactory.getValidator(fileType);
-        validator.validate(multipartFile);
-
-        System.out.println("header validated");
-
-        Path storedFilePath = storeFile(multipartFile,fileType);
+        Path storedFilePath = storeFile(multipartFile, fileType);
         int totalRows = countDataRows(storedFilePath);
 
         TenantUser uploadedBy = tenantUserRepository.findByEmail(
@@ -70,19 +69,34 @@ public class FileUploadService {
         file.setFileHash(fileHash);
         file = fileRepository.save(file);
 
-        System.out.println("file stored");
+        try {
+            FileHeaderValidator validator = validatorFactory.getValidator(fileType);
+            validator.validate(multipartFile);
+        } catch (IllegalArgumentException e) {
+            file.setStatus(FileStatus.FAILED);
+            fileRepository.save(file);
 
-        FileJobLauncher launcher=launcherFactory.getLauncher(fileType);
+            FileValidationErrors error = new FileValidationErrors();
+            error.setFile(file);
+            error.setRowNumber(1);
+            error.setFieldName("Header");
+            error.setErrorMessage("Invalid headers: " + e.getMessage());
+            fileValidationErrorsRepository.save(error);
 
+            throw e;
+        }
+
+        FileJobLauncher launcher = launcherFactory.getLauncher(fileType);
         launcher.launch(storedFilePath.toString(), file.getId(), tenant);
 
         return new FileUploadProcessDto(
-                "Customer batch job launched",
+                fileType.name() + " batch job launched",
                 file.getFileName(),
                 totalRows,
                 file.getStatus().toString()
         );
     }
+
 
     private Path storeFile(MultipartFile multipartFile,FileType fileType) throws IOException {
         Path uploadDir = Path.of("uploads", fileType.name().toLowerCase());

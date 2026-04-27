@@ -18,9 +18,9 @@ import org.springframework.context.annotation.Import;
 
 public interface AccountMapper {
 
-    @Mapping(target = "clientNumber", expression = "java(processDto.clientNumber().trim())")
-    @Mapping(target = "accountNumber", expression = "java(processDto.accountNumber().trim())")
-    @Mapping(target = "accountType", expression = "java(AccountType.valueOf(processDto.accountType().trim().toUpperCase(Locale.ROOT)))")
-    @Mapping(target = "accountStatus", expression = "java(AccountStatus.valueOf(processDto.accountStatus().trim().toUpperCase(Locale.ROOT)))")
+    @Mapping(target = "clientNumber", expression = "java(processDto.getClientNumber().trim())")
+    @Mapping(target = "accountNumber", expression = "java(processDto.getAccountNumber().trim())")
+    @Mapping(target = "accountType", expression = "java(AccountType.valueOf(processDto.getAccountType().trim().toUpperCase(Locale.ROOT)))")
+    @Mapping(target = "accountStatus", expression = "java(processDto.getAccountStatus() != null ? AccountStatus.valueOf(processDto.getAccountStatus().trim().toUpperCase(Locale.ROOT)) : null)")
     Account toAccount(AccountBatchProcessDto processDto);
 }
