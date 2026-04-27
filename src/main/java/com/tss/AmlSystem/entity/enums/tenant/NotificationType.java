@@ -5,5 +5,5 @@ public enum NotificationType {
     CASE_ASSIGNED,
     CASE_ESCALATED,
     STR_FILED,
-    BATCH_FAILED
+    FILE_FAILED
 }

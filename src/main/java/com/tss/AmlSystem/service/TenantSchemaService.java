@@ -40,10 +40,11 @@ public class TenantSchemaService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void populateTenantSchema(BankRegisterDto bankRegisterDto, UserCredential userCredential, String schemaName){
+    public void populateTenantSchema(BankRegisterDto bankRegisterDto, UserCredential userCredential){
         TenantUser user = tenantUserMapper.toTenantUser(bankRegisterDto);
         user.setSystemUser(userCredential);
         user.setRole(TenantUserRole.BANK_ADMIN);
+        user.setEmail(bankRegisterDto.bankAdminEmail());
         String currentUserEmail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserCredential currentUser = userCredentialRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Current user not found in database"));
