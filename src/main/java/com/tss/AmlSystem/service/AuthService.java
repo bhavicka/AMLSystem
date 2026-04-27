@@ -71,7 +71,7 @@ public class AuthService {
         tenantSchemaService.createSchema(tenant.getSchemaName());
         TenantContext.setCurrentTenant(tenant.getSchemaName());
         try{
-            tenantSchemaService.populateTenantSchema(bankRegisterDto, userCredential, tenant.getSchemaName());
+            tenantSchemaService.populateTenantSchema(bankRegisterDto, userCredential);
         }finally {
             TenantContext.clear();
         }

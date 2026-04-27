@@ -18,6 +18,10 @@ import org.hibernate.type.SqlTypes;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Account extends BaseEntity {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_id", nullable = false)
+    private File file;
+
     @Column(nullable = false, name = "client_number")
     private String clientNumber;
 
@@ -33,4 +37,6 @@ public class Account extends BaseEntity {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;
+
+
 }

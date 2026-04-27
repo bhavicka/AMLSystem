@@ -6,8 +6,8 @@ import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.TenantRuleParameterRepository;
 import com.tss.AmlSystem.repository.TransactionRepository;
-import com.tss.AmlSystem.strategy.RuleEvaluator;
-import com.tss.AmlSystem.strategy.RuleFactory;
+import com.tss.AmlSystem.strategy.rule.RuleEvaluator;
+import com.tss.AmlSystem.factory.RuleFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,9 @@
 package com.tss.AmlSystem.entity.enums.tenant;
 
-public enum BatchStatus {
+public enum FileStatus {
     UPLOADED,
     PROCESSING,
-    COMPLETED
+    PARTIALLY_COMPLETED,
+    COMPLETED,
+    FAILED
 }
