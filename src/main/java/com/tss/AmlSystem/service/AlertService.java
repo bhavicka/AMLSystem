@@ -53,6 +53,7 @@ public class AlertService {
         alert.setTenantRule(ruleContext.getTenantRule());
         alert.setStatus(AlertStatus.NEW);
         alert.setTransactions(transactions);
+        alert.setAlertHash(hash);
         alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
 
         alertRepository.save(alert);
