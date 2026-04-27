@@ -23,6 +23,7 @@ public class AccountItemReader {
             @Value("#{jobParameters['filePath']}") String filePath
     ) {
         Assert.hasText(filePath, "Job parameter 'filePath' is required");
+        System.out.println("DEBUG: Opening file for reading: " + filePath);
         return new FlatFileItemReaderBuilder<AccountBatchProcessDto>()
                 .name("accountCsvReader")
                 .resource(new FileSystemResource(filePath))

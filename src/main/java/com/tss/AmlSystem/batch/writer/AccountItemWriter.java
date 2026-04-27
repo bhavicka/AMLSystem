@@ -15,6 +15,13 @@ public class AccountItemWriter implements ItemWriter<Account> {
 
     @Override
     public void write(Chunk<? extends Account> chunk) {
-        accountRepository.saveAll(chunk.getItems());
+        System.out.println("DEBUG: Writing chunk of size: " + chunk.size());
+        try {
+            accountRepository.saveAll(chunk.getItems());
+            System.out.println("DEBUG: Successfully saved chunk");
+        } catch (Exception e) {
+            System.err.println("DEBUG: Writer error: " + e.getMessage());
+            throw e;
+        }
     }
 }

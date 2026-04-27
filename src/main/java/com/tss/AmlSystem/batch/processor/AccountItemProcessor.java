@@ -44,14 +44,18 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
+        System.out.println("DEBUG: accountProcessingStep beforeStep started");
         fileValidator = factory.getValidator(FileType.ACCOUNTS);
         Long fileId = stepExecution.getJobParameters().getLong("fileId");
+        System.out.println("DEBUG: fileId from params: " + fileId);
         this.fileEntity = fileValidator.getFile(fileId);
+        System.out.println("DEBUG: fileEntity found: " + (fileEntity != null ? fileEntity.getFileName() : "NULL"));
     }
 
     @Override
     public Account process(AccountBatchProcessDto dto) {
         int rowNumber = currentRowNumber();
+        System.out.println("DEBUG: Processing row " + rowNumber + ": " + dto.accountNumber());
 
         DataBinder binder = new DataBinder(dto);
         binder.setValidator(smartValidator);
@@ -59,12 +63,18 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
         BindingResult results = binder.getBindingResult();
 
         if (results.hasErrors()) {
+            System.out.println("DEBUG: Validation errors on row " + rowNumber);
             handleValidationErrors(results, fileEntity, rowNumber);
             return null;
         }
-        Account account = accountMapper.toAccount(dto);
-        account.setFile(fileEntity);
-        return account;
+        try {
+            Account account = accountMapper.toAccount(dto);
+            account.setFile(fileEntity);
+            return account;
+        } catch (Exception e) {
+            System.err.println("DEBUG: Mapping error on row " + rowNumber + " for account " + dto.accountNumber() + ": " + e.getMessage());
+            throw e;
+        }
     }
 
     private int currentRowNumber() {

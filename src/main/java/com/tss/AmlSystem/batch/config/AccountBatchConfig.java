@@ -30,12 +30,17 @@ public class AccountBatchConfig {
             AccountItemWriter writer
     ) {
         return new StepBuilder("accountProcessingStep", jobRepository)
-                .<AccountBatchProcessDto, Account>chunk(1000)
-                .transactionManager(transactionManager)
+                .<AccountBatchProcessDto, Account>chunk(1000, transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                .listener(processor) // Ensure AccountItemProcessor implements ItemProcessListener
+                .faultTolerant()
+                .skip(Exception.class)
+                .skipLimit(100)
+                .retryLimit(3)
+                .retry(org.springframework.dao.OptimisticLockingFailureException.class)
+                .retry(org.springframework.dao.DeadlockLoserDataAccessException.class)
+                .listener(processor)
                 .build();
     }
 

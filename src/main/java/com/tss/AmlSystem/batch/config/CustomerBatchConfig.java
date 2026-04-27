@@ -29,11 +29,16 @@ public class CustomerBatchConfig {
             CustomerItemWriter writer
     ) {
         return new StepBuilder("customerProcessingStep", jobRepository)
-                .<CustomerBatchProcessDto, Customer>chunk(1000)
-                .transactionManager(transactionManager)
+                .<CustomerBatchProcessDto, Customer>chunk(1000, transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .faultTolerant()
+                .skip(Exception.class)
+                .skipLimit(100)
+                .retryLimit(3)
+                .retry(org.springframework.dao.OptimisticLockingFailureException.class)
+                .retry(org.springframework.dao.DeadlockLoserDataAccessException.class)
                 .listener(processor)
                 .build();
     }

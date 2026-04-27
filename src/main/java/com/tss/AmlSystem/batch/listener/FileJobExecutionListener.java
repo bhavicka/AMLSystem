@@ -5,6 +5,7 @@ import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
 import com.tss.AmlSystem.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.stereotype.Component;
@@ -44,9 +45,18 @@ public class FileJobExecutionListener implements JobExecutionListener {
             }
 
             fileRepository.findById(fileId).ifPresent(file -> {
-                file.setStatus(FileStatus.COMPLETED);
+                if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
+                    file.setStatus(FileStatus.COMPLETED);
+                    log.info("File {} processing completed successfully.", fileId);
+                } else {
+                    file.setStatus(FileStatus.FAILED);
+                    log.error("File {} processing failed with status: {}", fileId, jobExecution.getStatus());
+                    jobExecution.getAllFailureExceptions().forEach(e -> {
+                        System.err.println("❌ Critical Job Failure Exception: " + e.getMessage());
+                        e.printStackTrace();
+                    });
+                }
                 fileRepository.save(file);
-                log.info("File {} processing completed.", fileId);
             });
         } finally {
             TenantContext.clear();

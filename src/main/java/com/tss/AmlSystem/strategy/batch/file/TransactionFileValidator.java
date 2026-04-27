@@ -10,7 +10,6 @@ public class TransactionFileValidator extends FileValidator{
     public TransactionFileValidator(FileRepository fileRepository, FileValidationErrorsRepository fileValidationErrorsRepository) {
         super(fileRepository, fileValidationErrorsRepository);
     }
-
     @Override
     public FileType getFileType() {
         return FileType.TRANSACTIONS;
