@@ -25,12 +25,12 @@ import java.util.Locale;
         }
 )
 public interface TransactionMapper {
-    @Mapping(target = "accountNumber", expression = "java(processDto.accountNumber().trim())")
+    @Mapping(target = "accountNumber", expression = "java(processDto.getAccountNumber().trim())")
     @Mapping(target = "counterPartyAccountNumber",
-            expression = "java(processDto.counterPartyAccountNumber() != null ? processDto.counterPartyAccountNumber().trim() : null)")
-    @Mapping(target = "transactionType", expression = "java(TransactionType.valueOf(processDto.transactionType().trim().toUpperCase(Locale.ROOT)))")
-    @Mapping(target = "transactionMode", expression = "java(TransactionMode.valueOf(processDto.transactionMode().trim().toUpperCase(Locale.ROOT)))")
-    @Mapping(target = "transactionReferenceNumber", expression = "java(processDto.transactionReferenceNumber().trim())")
+            expression = "java(processDto.getCounterPartyAccountNumber() != null ? processDto.getCounterPartyAccountNumber().trim() : null)")
+    @Mapping(target = "transactionType", expression = "java(TransactionType.valueOf(processDto.getTransactionType().trim().toUpperCase(Locale.ROOT)))")
+    @Mapping(target = "transactionMode", expression = "java(TransactionMode.valueOf(processDto.getTransactionMode().trim().toUpperCase(Locale.ROOT)))")
+    @Mapping(target = "transactionReferenceNumber", expression = "java(processDto.getTransactionReferenceNumber().trim())")
     @Mapping(target = "transactionDate", source = "transactionDate")
     @Mapping(target = "amount", source = "amount")
     Transaction toTransaction(TransactionBatchProcessDto processDto);

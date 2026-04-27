@@ -12,11 +12,12 @@ import com.tss.AmlSystem.mapper.TransactionMapper;
 import com.tss.AmlSystem.repository.AccountRepository;
 import com.tss.AmlSystem.strategy.batch.file.FileValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.listener.SkipListener;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.listener.StepExecutionListener;
-import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.file.FlatFileParseException;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.DataBinder;
@@ -27,7 +28,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @StepScope
-public class TransactionItemProcessor implements ItemProcessor<TransactionBatchProcessDto, Transaction>, StepExecutionListener {
+public class TransactionItemProcessor implements ItemProcessor<TransactionBatchProcessDto, Transaction>, StepExecutionListener, SkipListener<TransactionBatchProcessDto, Transaction> {
 
     private final TransactionMapper transactionMapper;
 
@@ -48,7 +49,7 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
 
     @Override
     public Transaction process(TransactionBatchProcessDto dto) {
-        int rowNumber = currentRowNumber();
+        int rowNumber = dto.getRowNumber();
 
         DataBinder binder = new DataBinder(dto);
         binder.setValidator(smartValidator);
@@ -59,14 +60,13 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
             handleValidationErrors(results, fileEntity, rowNumber);
             return null;
         }
-        if (!accountRepository.existsByAccountNumber(dto.accountNumber().trim())) {
-            // Save a custom error to your table
-//            validationService.saveManualError(
-//                    fileEntity,
-//                    rowNumber,
-//                    "accountNumber",
-//                    "Account number " + dto.accountNumber() + " already exists in the system."
-//            );
+        if (!accountRepository.existsByAccountNumber(dto.getAccountNumber().trim())) {
+            FileValidationErrors error = new FileValidationErrors();
+            error.setFile(fileEntity);
+            error.setRowNumber(rowNumber);
+            error.setFieldName("accountNumber");
+            error.setErrorMessage("Account with number " + dto.getAccountNumber() + " does not exist.");
+            fileValidator.saveValidationErrors(List.of(error));
             return null; // Skip this row
         }
 
@@ -75,10 +75,38 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
         return transaction;
     }
 
-    private int currentRowNumber() {
-        StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
-        return (int)(stepExecution.getReadCount() + 1);
+    @Override
+    public void onSkipInRead(Throwable t) {
+        if (t instanceof FlatFileParseException ffpe) {
+            FileValidationErrors error = new FileValidationErrors();
+            error.setFile(fileEntity);
+            error.setRowNumber(ffpe.getLineNumber());
+            error.setFieldName("Row");
+            error.setErrorMessage("Parsing error: " + ffpe.getMessage());
+            fileValidator.saveValidationErrors(List.of(error));
+        }
     }
+
+    @Override
+    public void onSkipInWrite(Transaction item, Throwable t) {
+        FileValidationErrors error = new FileValidationErrors();
+        error.setFile(fileEntity);
+        error.setRowNumber(0);
+        error.setFieldName("Database");
+        error.setErrorMessage("Persistence error: " + t.getMessage());
+        fileValidator.saveValidationErrors(List.of(error));
+    }
+
+    @Override
+    public void onSkipInProcess(TransactionBatchProcessDto item, Throwable t) {
+        FileValidationErrors error = new FileValidationErrors();
+        error.setFile(fileEntity);
+        error.setRowNumber(item.getRowNumber());
+        error.setFieldName("Processing");
+        error.setErrorMessage("Processing error: " + t.getMessage());
+        fileValidator.saveValidationErrors(List.of(error));
+    }
+
     private void handleValidationErrors(BindingResult results, File fileEntity, int rowNumber) {
         List<FileValidationErrors> errorList = results.getFieldErrors().stream()
                 .map(fieldError -> {
@@ -94,4 +122,5 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
         fileValidator.saveValidationErrors(errorList);
     }
 }
+
 
