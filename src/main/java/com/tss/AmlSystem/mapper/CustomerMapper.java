@@ -27,14 +27,17 @@ public interface CustomerMapper {
     @Mapping(target = "clientNumber", expression = "java(processDto.clientNumber().trim())")
     @Mapping(target = "firstName", expression = "java(processDto.firstName().trim())")
     @Mapping(target = "lastName", expression = "java(processDto.lastName().trim())")
-    @Mapping(target = "middleName", expression = "java(processDto.middleName().trim())")
+    @Mapping(target = "middleName", expression = "java(processDto.middleName() != null ? processDto.middleName().trim() : null)")
     @Mapping(target = "aadharNumber", expression = "java(processDto.aadharNumber().trim())")
     @Mapping(target = "pan", expression = "java(processDto.pan().trim().toUpperCase(Locale.ROOT))")
     @Mapping(target = "occupation", expression = "java(processDto.occupation().trim())")
     @Mapping(target = "occupationType", expression = "java(OccupationType.valueOf(processDto.occupationType().trim().toUpperCase(Locale.ROOT)))")
     @Mapping(target = "riskRate", expression = "java(Severity.valueOf(processDto.riskRate().trim().toUpperCase(Locale.ROOT)))")
     @Mapping(target = "isPep", expression = "java(Boolean.parseBoolean(processDto.isPep().trim()))")
-    @Mapping(target = "familyCode", expression = "java(processDto.familyCode().trim())")
+    @Mapping(target = "familyCode", expression = "java(processDto.familyCode() != null ? processDto.familyCode().trim() : null)")
+    @Mapping(target = "dob", source = "dob")
+    @Mapping(target = "monthlyIncome", source = "monthlyIncome")
+    @Mapping(target = "professionMultiplier", source = "professionMultiplier")
     Customer toCustomer(CustomerBatchProcessDto processDto);
 
     default LocalDate mapStringToLocalDate(String dateString) {

@@ -9,6 +9,7 @@ import com.tss.AmlSystem.entity.tenant.FileValidationErrors;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.factory.FileValidatorFactory;
 import com.tss.AmlSystem.mapper.TransactionMapper;
+import com.tss.AmlSystem.repository.AccountRepository;
 import com.tss.AmlSystem.strategy.batch.file.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -34,6 +35,8 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
     private final SmartValidator smartValidator;
     private final FileValidatorFactory factory;
 
+    private final AccountRepository accountRepository;
+
     private File fileEntity;
 
     @Override
@@ -55,6 +58,16 @@ public class TransactionItemProcessor implements ItemProcessor<TransactionBatchP
         if (results.hasErrors()) {
             handleValidationErrors(results, fileEntity, rowNumber);
             return null;
+        }
+        if (!accountRepository.existsByAccountNumber(dto.accountNumber().trim())) {
+            // Save a custom error to your table
+//            validationService.saveManualError(
+//                    fileEntity,
+//                    rowNumber,
+//                    "accountNumber",
+//                    "Account number " + dto.accountNumber() + " already exists in the system."
+//            );
+            return null; // Skip this row
         }
 
         Transaction transaction = transactionMapper.toTransaction(dto);

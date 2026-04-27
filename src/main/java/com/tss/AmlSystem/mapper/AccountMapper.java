@@ -21,6 +21,6 @@ public interface AccountMapper {
     @Mapping(target = "clientNumber", expression = "java(processDto.clientNumber().trim())")
     @Mapping(target = "accountNumber", expression = "java(processDto.accountNumber().trim())")
     @Mapping(target = "accountType", expression = "java(AccountType.valueOf(processDto.accountType().trim().toUpperCase(Locale.ROOT)))")
-    @Mapping(target = "accountStatus", expression = "java(AccountStatus.valueOf(processDto.accountStatus().trim().toUpperCase(Locale.ROOT)))")
+    @Mapping(target = "accountStatus", expression = "java(processDto.accountStatus() != null ? AccountStatus.valueOf(processDto.accountStatus().trim().toUpperCase(Locale.ROOT)) : null)")
     Account toAccount(AccountBatchProcessDto processDto);
 }

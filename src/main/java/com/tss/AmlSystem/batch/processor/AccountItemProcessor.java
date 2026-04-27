@@ -11,6 +11,8 @@ import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.FileValidationErrors;
 import com.tss.AmlSystem.factory.FileValidatorFactory;
 import com.tss.AmlSystem.mapper.AccountMapper;
+import com.tss.AmlSystem.repository.AccountRepository;
+import com.tss.AmlSystem.repository.CustomerRepository;
 import com.tss.AmlSystem.strategy.batch.file.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -40,6 +42,8 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
     private final SmartValidator smartValidator;
     private final FileValidatorFactory factory;
 
+    private final CustomerRepository customerRepository;
+
     private File fileEntity;
 
     @Override
@@ -66,6 +70,17 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
             System.out.println("DEBUG: Validation errors on row " + rowNumber);
             handleValidationErrors(results, fileEntity, rowNumber);
             return null;
+        }
+        if (!customerRepository.existsByClientNumber(dto.clientNumber())) {
+            System.out.println("NO SUCH CUSTOMER");
+            // Save a custom error to your table
+//            validationService.saveManualError(
+//                    fileEntity,
+//                    rowNumber,
+//                    "accountNumber",
+//                    "Account number " + dto.accountNumber() + " already exists in the system."
+//            );
+            return null; // Skip this row
         }
         try {
             Account account = accountMapper.toAccount(dto);
