@@ -26,8 +26,8 @@ public class RuleExecutionService {
     private final TransactionRepository transactionRepository;
     private final TenantRuleParameterRepository tenantRuleParameterRepository;
 
-    public void runRule(TenantRule rule, LocalDate lookBackDays){
-        log.info("{} Initiating Rule Execution for: {} with Lookback: {}", LogTag.RULE.getValue(), rule.getRuleCode(), lookBackDays);
+    public void runRule(TenantRule rule){
+        log.info("{} Initiating Rule Execution for: {}", LogTag.RULE.getValue(), rule.getRuleCode());
         //Take out parameters from rule
         Map<String, String> params =
                 tenantRuleParameterRepository.findByRuleId(rule.getId())
@@ -37,14 +37,11 @@ public class RuleExecutionService {
                                 TenantRuleParameter::getParamValue
                         ));
 
-        //take out transactions with lookback
-        List<Transaction> transactionList=transactionRepository.findRecentTransactions(lookBackDays);
-
         //get evaluator object from factory
         RuleEvaluator evaluator= ruleFactory.getRuleEvaluator(rule.getRuleCode());
 
         //build context to give it to evaluate
-        RuleContext context=new RuleContext(transactionList,rule,params,lookBackDays);
+        RuleContext context=new RuleContext(rule,params);
 
         log.debug("{} Evaluating {} transactions against rule: {}", LogTag.RULE.getValue(), transactionList.size(), rule.getRuleCode());
         evaluator.evaluate(context);
