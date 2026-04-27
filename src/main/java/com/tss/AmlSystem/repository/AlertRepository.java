@@ -17,6 +17,13 @@ import java.util.List;
 public interface AlertRepository extends JpaRepository<Alert,Long> {
 
     @Query("""
+    SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
+    FROM Alert a
+    WHERE a.alertHash = :hash
+""")
+    boolean existsByAlertHash(String hash);
+
+    @Query("""
     SELECT
         a.alertNumber AS alertNumber,
         r.ruleName AS brokenRuleName,

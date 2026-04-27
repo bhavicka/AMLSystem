@@ -1,4 +1,4 @@
-package com.tss.AmlSystem.strategy;
+package com.tss.AmlSystem.strategy.rule;
 
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
@@ -6,27 +6,27 @@ import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.repository.RuleQueryRepository;
+import com.tss.AmlSystem.service.AlertService;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.apache.commons.codec.cli.Digest;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component("INCOME_MISMATCH")
 @RequiredArgsConstructor
 public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
     private final AlertRepository alertRepository;
+    private final AlertService alertService;
     private final RuleQueryRepository ruleQueryRepository;
+    private final EntityManager entityManager;
 
     @Override
     public void evaluate(RuleContext ruleContext) {
@@ -56,9 +56,7 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
         );
 
         if(suspiciousClientsWithRange.isEmpty())return;
-        Map<String, List<Transaction>> clientTxnMap = new HashMap<>();
-
-
+        Map<String, Set<Long>> clientTxnMap = new HashMap<>();
 
         for(Object obj:suspiciousClientsWithRange) {
 
@@ -66,54 +64,41 @@ public class IncomeMismatchRuleEvaluator implements RuleEvaluator {
             LocalDate windowEnd = (LocalDate) ((Object[]) obj)[1];
             LocalDate windowStart = (LocalDate) ((Object[]) obj)[2];
 
-            List<Object[]> results = ruleQueryRepository.findFlaggedTransactionsForIncomeMismatch(
+            List<Long> results = ruleQueryRepository.findFlaggedTransactionsForIncomeMismatch(
                     client,
                     windowStart,
                     windowEnd
             );
 
-            for (Object[] row : results) {
-                Transaction txn = new Transaction();
-                txn.setId(((Number) row[0]).longValue());
-                txn.setAccountNumber((String) row[1]);
-                txn.setAmount((BigDecimal) row[2]);
-                txn.setTransactionDate((LocalDate) row[3]);
-
+            for (Long id : results) {
                 clientTxnMap
-                        .computeIfAbsent(client, k -> new ArrayList<>())
-                        .add(txn);
+                        .computeIfAbsent(client, k -> new HashSet<>())
+                        .add(id);
             }
 
         }
 
         if(clientTxnMap.isEmpty())return;
-        List<Alert> generatedAlerts=new ArrayList<>();
 
-        for(Map.Entry<String,List<Transaction>> entry: clientTxnMap.entrySet()) {
+        for(Map.Entry<String,Set<Long>> entry: clientTxnMap.entrySet()) {
             String client = entry.getKey();
-            List<Transaction> transactions = entry.getValue();
+
+            List<Long> sortedTransactionIds=entry.getValue().stream().sorted().toList();
+
+            String base=client+"|"+ruleContext.getTenantRule().getId()+"|"+
+                    sortedTransactionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+
+            String hash= DigestUtils.sha256Hex(base);
+
+            List<Transaction> transactions = entry.getValue()
+                    .stream()
+                    .map(id -> entityManager.getReference(Transaction.class, id))
+                    .toList();
 
 
-            boolean exists = alertRepository.existsByClientNumberAndTenantRuleIdAndCreatedAfter(
-                    client,
-                    ruleContext.getTenantRule().getId(),
-                    lookBackStart
-            );
+            alertService.saveAlert(client,ruleContext,transactions,hash);
 
-            if (exists) continue;
-
-            Alert alert = new Alert();
-            alert.setClientNumber(client);
-            alert.setTenantRule(ruleContext.getTenantRule());
-            alert.setStatus(AlertStatus.NEW);
-            alert.setTransactions(transactions);
-            alert.setCreatedAt(LocalDateTime.now());
-            alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
-
-            generatedAlerts.add(alert);
         }
-
-        alertRepository.saveAll(generatedAlerts);
 
 
     }

@@ -43,4 +43,7 @@ public class Alert extends BaseEntity {
 
     @Column(name = "client_number",nullable = false)
     private String clientNumber;
+
+    @Column(name = "alert_hash",nullable = false,unique = true)
+    private String alertHash;
 }

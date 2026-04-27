@@ -7,10 +7,12 @@ import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.repository.RuleQueryRepository;
 import com.tss.AmlSystem.repository.TransactionRepository;
+import com.tss.AmlSystem.service.AlertService;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -18,17 +20,16 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component("STRUCTURING")
 @RequiredArgsConstructor
 public class StructuringRuleEvaluator implements RuleEvaluator {
 
-    private final AlertRepository alertRepository;
+    private final AlertService alertService;
     private final RuleQueryRepository ruleQueryRepository;
+    private final EntityManager entityManager;
 
     @Override
     public void evaluate(RuleContext ruleContext) {
@@ -57,7 +58,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
         );
 
         if (suspiciousClientsWithRange.isEmpty()) return;
-        Map<String,List<Transaction>> clientTxnMap=new HashMap<>();
+        Map<String, Set<Long>> clientTxnMap=new HashMap<>();
 
 
         for (Object[] obj : suspiciousClientsWithRange) {
@@ -66,7 +67,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             LocalDate windowEnd = ((LocalDate) obj[1]);
             LocalDate windowStart = ((LocalDate) obj[2]);
 
-            List<Object[]> results =
+            List<Long> results =
                     ruleQueryRepository.findFlaggedTransactionsForStructuring(
                             client,
                             perTxnThreshold,
@@ -74,49 +75,35 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
                             windowEnd
                     );
 
-            for (Object[] row : results) {
-
-                Transaction txn = new Transaction();
-                txn.setId(((Number) row[0]).longValue());
-                txn.setAccountNumber((String) row[1]);
-                txn.setAmount((BigDecimal) row[2]);
-                txn.setTransactionDate((LocalDate) row[3]);
-
+            for (Long id : results) {
                 clientTxnMap
-                        .computeIfAbsent(client, k -> new ArrayList<>())
-                        .add(txn);
+                        .computeIfAbsent(client, k -> new HashSet<>())
+                        .add(id);
             }
         }
 
         if(clientTxnMap.isEmpty())return;
 
-        List<Alert> generatedAlerts = new ArrayList<>();
 
-        for (Map.Entry<String, List<Transaction>> entry : clientTxnMap.entrySet()) {
+        for (Map.Entry<String, Set<Long>> entry : clientTxnMap.entrySet()) {
 
             String client = entry.getKey();
-            List<Transaction> transactions = entry.getValue();
 
-            boolean exists = alertRepository
-                    .existsByClientNumberAndTenantRuleIdAndCreatedAfter(
-                            client,
-                            ruleContext.getTenantRule().getId(),
-                            lookBackStart
-                    );
+            List<Long> sortedTransactionIds=entry.getValue().stream().sorted().toList();
 
-            if (exists) continue;
+            String base=client+"|"+ruleContext.getTenantRule().getId()+"|"+
+                    sortedTransactionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
-            Alert alert = new Alert();
-            alert.setClientNumber(client);
-            alert.setTenantRule(ruleContext.getTenantRule());
-            alert.setStatus(AlertStatus.NEW);
-            alert.setTransactions(transactions);
-            alert.setCreatedAt(LocalDateTime.now());
-            alert.setAlertNumber(UniqueNumberGenerator.generateAlertNumber());
+            String hash= DigestUtils.sha256Hex(base);
 
-            generatedAlerts.add(alert);
+            List<Transaction> transactions = entry.getValue()
+                    .stream()
+                    .map(id -> entityManager.getReference(Transaction.class, id))
+                    .toList();
+
+
+            alertService.saveAlert(client,ruleContext,transactions,hash);
         }
 
-        alertRepository.saveAll(generatedAlerts);
     }
 }

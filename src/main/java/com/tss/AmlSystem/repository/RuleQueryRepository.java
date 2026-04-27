@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
     @Query(value = """
-    SELECT 
+    SELECT
         client_number,
         CAST(transaction_date AS DATE) AS window_end,
         CAST(transaction_date - INTERVAL '1 day' * :timeWindowInDays AS DATE) AS window_start
@@ -60,10 +60,7 @@ public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
 
     @Query(value = """
         SELECT
-            t.id AS id,
-            t.account_number AS accountNumber,
-            t.amount AS amount,
-            t.transaction_date AS transactionDate
+            t.id AS id
         FROM transactions t
         JOIN accounts a ON t.account_number = a.account_number
         WHERE a.client_number = :client
@@ -72,7 +69,7 @@ public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
           AND t.transaction_date BETWEEN :windowStart AND :windowEnd
         ORDER BY t.transaction_date DESC
         """, nativeQuery = true)
-    List<Object[]> findFlaggedTransactionsForStructuring(
+    List<Long> findFlaggedTransactionsForStructuring(
             String client,
             BigDecimal perTxnThreshold,
             LocalDate windowStart,
@@ -130,7 +127,7 @@ public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
 
 
     @Query(value = """
-            SELECT t.id,t.account_number,t.amount,t.transaction_date
+            SELECT t.id
                 FROM transactions t
                 JOIN accounts a ON t.account_number=a.account_number
                 WHERE a.client_number = :clientNumber
@@ -138,7 +135,7 @@ public interface RuleQueryRepository extends JpaRepository<Transaction,Long> {
                   AND t.transaction_date BETWEEN :windowStart AND :windowEnd
                 ORDER BY t.transaction_date DESC
     """,nativeQuery = true)
-    List<Object[]> findFlaggedTransactionsForIncomeMismatch(
+    List<Long> findFlaggedTransactionsForIncomeMismatch(
             String clientNumber,
             LocalDate windowStart,
             LocalDate windowEnd
