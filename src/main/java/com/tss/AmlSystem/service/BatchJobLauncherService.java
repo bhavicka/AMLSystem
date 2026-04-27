@@ -7,8 +7,11 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import com.tss.AmlSystem.entity.enums.LogTag;
 
 @Service
+@Slf4j
 public class BatchJobLauncherService {
 
     private final JobLauncher jobLauncher;
@@ -30,6 +33,7 @@ public class BatchJobLauncherService {
 
     @Async
     public void launchCustomerJob(String filePath, Long fileId, String tenant) throws Exception {
+        log.info("{} Preparing to launch Customer Job for File ID: {}, Tenant: {}", LogTag.BATCH.getValue(), fileId, tenant);
         JobParameters params = new JobParametersBuilder()
                 .addString("filePath", filePath)
                 .addLong("fileId", fileId)
@@ -41,6 +45,7 @@ public class BatchJobLauncherService {
 
     @Async
     public void launchAccountJob(String filePath, Long fileId, String tenant) throws Exception {
+        log.info("{} Preparing to launch Account Job for File ID: {}, Tenant: {}", LogTag.BATCH.getValue(), fileId, tenant);
         JobParameters params = new JobParametersBuilder()
                 .addString("filePath", filePath)
                 .addLong("fileId", fileId)
@@ -51,6 +56,7 @@ public class BatchJobLauncherService {
     }
     @Async
     public void launchTransactionJob(String filePath, Long fileId, String tenant) throws Exception {
+        log.info("{} Preparing to launch Transaction Job for File ID: {}, Tenant: {}", LogTag.BATCH.getValue(), fileId, tenant);
         JobParameters params = new JobParametersBuilder()
                 .addString("filePath", filePath)
                 .addLong("fileId", fileId)

@@ -15,9 +15,12 @@ import org.springframework.util.Assert;
 import org.springframework.batch.infrastructure.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.infrastructure.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.infrastructure.item.file.transform.DelimitedLineTokenizer;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class CustomerItemReader {
 
     @Bean
@@ -26,6 +29,7 @@ public class CustomerItemReader {
             @Value("#{jobParameters['filePath']}") String filePath
     ) {
         Assert.hasText(filePath, "Job parameter 'filePath' is required");
+        log.debug("{} Attempting to configure CSV Reader for file: {}", LogTag.BATCH.getValue(), filePath);
 
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
         tokenizer.setNames(FileHeaders.CUSTOMER_HEADER.toArray(new String[0]));

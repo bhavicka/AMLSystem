@@ -11,8 +11,11 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class JwtUtils {
 
     @Value("${app.jwtSecret}")
@@ -26,6 +29,7 @@ public class JwtUtils {
     }
 
     public String generateJwtToken(String email, String bankName, String schemaName, List<String> roles) {
+        log.debug("{} Generating JWT token for user: {} with schema: {}", LogTag.SECURITY.getValue(), email, schemaName);
         return Jwts.builder()
                 .subject(email)
                 .claim("bankName", bankName)
@@ -56,15 +60,16 @@ public class JwtUtils {
     }
 
     public boolean validateJwtToken(String authToken) {
-//        try {
-//
-//        } catch (Exception ignore){}
-//        return false;
-        Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(authToken);
-        return true;
+        try {
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(authToken);
+            return true;
+        } catch (Exception e) {
+            log.warn("{} JWT Token validation failed: {}", LogTag.SECURITY.getValue(), e.getMessage());
+        }
+        return false;
     }
     public List<String> getRolesFromJwtToken(String token) {
         Claims claims = Jwts.parser()

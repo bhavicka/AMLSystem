@@ -15,16 +15,19 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RuleExecutionService {
     private final RuleFactory ruleFactory;
     private final TransactionRepository transactionRepository;
     private final TenantRuleParameterRepository tenantRuleParameterRepository;
 
     public void runRule(TenantRule rule, LocalDate lookBackDays){
-
+        log.info("{} Initiating Rule Execution for: {} with Lookback: {}", LogTag.RULE.getValue(), rule.getRuleCode(), lookBackDays);
         //Take out parameters from rule
         Map<String, String> params =
                 tenantRuleParameterRepository.findByRuleId(rule.getId())
@@ -43,6 +46,7 @@ public class RuleExecutionService {
         //build context to give it to evaluate
         RuleContext context=new RuleContext(transactionList,rule,params,lookBackDays);
 
+        log.debug("{} Evaluating {} transactions against rule: {}", LogTag.RULE.getValue(), transactionList.size(), rule.getRuleCode());
         evaluator.evaluate(context);
     }
 }

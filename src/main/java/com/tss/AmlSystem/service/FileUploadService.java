@@ -17,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +35,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileUploadService {
 
     private final FileRepository fileRepository;
@@ -43,12 +46,14 @@ public class FileUploadService {
     private final FileHeaderValidatorFactory validatorFactory;
 
     public FileUploadProcessDto uploadFile(MultipartFile multipartFile, FileType fileType) throws Exception {
+        String tenant = TenantContext.getCurrentTenant();
+        log.info("{} Starting file upload process. Target FileType: {}, Tenant: {}", LogTag.BATCH.getValue(), fileType, tenant);
+
         String fileHash = calculateFileHash(multipartFile);
         fileRepository.findByFileHash(fileHash).ifPresent(existingFile -> {
+            log.error("{} {} Duplicate file upload detected. FileHash: {}, Tenant: {}", LogTag.BATCH.getValue(), LogTag.SECURITY.getValue(), fileHash, tenant);
             throw new RuntimeException("Duplicate file upload detected: " + existingFile.getFileName());
         });
-
-        String tenant = TenantContext.getCurrentTenant();
 
         Path storedFilePath = storeFile(multipartFile, fileType);
         int totalRows = countDataRows(storedFilePath);
@@ -73,6 +78,7 @@ public class FileUploadService {
             FileHeaderValidator validator = validatorFactory.getValidator(fileType);
             validator.validate(multipartFile);
         } catch (IllegalArgumentException e) {
+            log.warn("{} Initial header validation failed for file {}: {}", LogTag.BATCH.getValue(), file.getId(), e.getMessage());
             file.setStatus(FileStatus.FAILED);
             fileRepository.save(file);
 
@@ -87,6 +93,7 @@ public class FileUploadService {
         }
 
         FileJobLauncher launcher = launcherFactory.getLauncher(fileType);
+        log.info("{} Launching Spring Batch job for File ID: {} in Tenant: {}", LogTag.BATCH.getValue(), file.getId(), tenant);
         launcher.launch(storedFilePath.toString(), file.getId(), tenant);
 
         return new FileUploadProcessDto(

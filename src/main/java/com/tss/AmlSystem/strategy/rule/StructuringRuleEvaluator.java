@@ -13,9 +13,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Component("STRUCTURING")
 @RequiredArgsConstructor
+@Slf4j
 public class StructuringRuleEvaluator implements RuleEvaluator {
 
     private final AlertRepository alertRepository;
@@ -36,6 +39,8 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
 
         LocalDateTime effectiveStart=lookBackStart.isAfter(ruleWindowStart)
                 ?lookBackStart:ruleWindowStart;
+
+        log.debug("{} Executing STRUCTURING rule evaluation. Threshold: {}, Min Txns: {}, Window: {} days", LogTag.RULE.getValue(), totalThreshold, minimumTxns, timeWindowInDays);
 
         // Step 1: Find all account numbers that match the structuring pattern.
         // Each transaction is below perTxnThreshold (avoiding detection),
@@ -61,6 +66,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
                 totalThreshold
         );
 
+        log.info("{} Found {} suspicious accounts for structuring", LogTag.RULE.getValue(), suspiciousAccounts.size());
         if (suspiciousAccounts.isEmpty()) return;
 
         // Step 2: For each suspicious account, fetch its transactions
@@ -110,6 +116,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             alert.setCreatedAt(LocalDateTime.now());
 
             alertRepository.save(alert);
+            log.info("{} {} Generated Structuring Alert for Account: {}", LogTag.RULE.getValue(), LogTag.SECURITY.getValue(), accountNumber);
         }
     }
 }

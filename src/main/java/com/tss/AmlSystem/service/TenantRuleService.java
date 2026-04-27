@@ -14,9 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TenantRuleService {
 
     private final TenantRuleRepository tenantRuleRepository;
@@ -25,6 +28,7 @@ public class TenantRuleService {
     private final RuleTemplateRepository ruleTemplateRepository;
 
     public boolean assignRules(RuleAssignmentDto ruleAssignmentDto){
+        log.info("{} Assigning rules for schema: {}", LogTag.TENANT.getValue(), ruleAssignmentDto.schemaName());
         Tenant tenant = tenantRepository.findBySchemaName(ruleAssignmentDto.schemaName())
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
@@ -44,6 +48,7 @@ public class TenantRuleService {
                         .orElseThrow(() -> new RuntimeException("Tenant rule not found for code: " + ruleAssignmentDto.ruleCodes().get(0)));
                 tenantRule.setIsActive(true);
                 tenantRuleRepository.save(tenantRule);
+                log.info("{} {} Activated rule {} for schema: {}", LogTag.TENANT.getValue(), LogTag.RULE.getValue(), ruleCode, ruleAssignmentDto.schemaName());
             }
         } finally {
             TenantContext.clear();
