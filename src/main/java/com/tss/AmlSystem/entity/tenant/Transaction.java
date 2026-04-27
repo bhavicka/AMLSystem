@@ -45,7 +45,7 @@ public class Transaction extends BaseEntity {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TransactionMode transactionMode;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2, name = "amount")
     private BigDecimal amount;
 
     @Column(nullable = false, name = "transaction_reference_number")

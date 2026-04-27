@@ -12,6 +12,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.Assert;
 
+import org.springframework.batch.infrastructure.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.infrastructure.item.file.mapping.DefaultLineMapper;
+import org.springframework.batch.infrastructure.item.file.transform.DelimitedLineTokenizer;
+
 @Configuration
 @RequiredArgsConstructor
 public class TransactionItemReader {
@@ -22,15 +26,30 @@ public class TransactionItemReader {
             @Value("#{jobParameters['filePath']}") String filePath
     ) {
         Assert.hasText(filePath, "Job parameter 'filePath' is required");
+
+        DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
+        tokenizer.setNames(FileHeaders.TRANSACTION_HEADER.toArray(new String[0]));
+
+        BeanWrapperFieldSetMapper<TransactionBatchProcessDto> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
+        fieldSetMapper.setTargetType(TransactionBatchProcessDto.class);
+
+        DefaultLineMapper<TransactionBatchProcessDto> lineMapper = new DefaultLineMapper<>() {
+            @Override
+            public TransactionBatchProcessDto mapLine(String line, int lineNumber) throws Exception {
+                TransactionBatchProcessDto dto = super.mapLine(line, lineNumber);
+                dto.setRowNumber(lineNumber);
+                return dto;
+            }
+        };
+        lineMapper.setLineTokenizer(tokenizer);
+        lineMapper.setFieldSetMapper(fieldSetMapper);
+
         return new FlatFileItemReaderBuilder<TransactionBatchProcessDto>()
                 .name("transactionCsvReader")
                 .resource(new FileSystemResource(filePath))
                 .strict(true)
                 .linesToSkip(1)
-                .delimited()
-                .delimiter(",")
-                .names(FileHeaders.TRANSACTION_HEADER.toArray(new String[0]))
-                .targetType(TransactionBatchProcessDto.class)
+                .lineMapper(lineMapper)
                 .build();
     }
-}
+}

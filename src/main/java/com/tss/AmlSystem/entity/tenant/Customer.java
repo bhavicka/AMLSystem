@@ -66,7 +66,7 @@ public class Customer extends BaseEntity {
     @Column(nullable = false, name = "dob")
     private LocalDate dob;
 
-    @Column(precision = 5, scale = 2, name = "profession_multiplier")
+    @Column(precision = 3, scale = 2, name = "profession_multiplier")
     private BigDecimal professionMultiplier;
 
     @Column(name = "family_code")
