@@ -14,8 +14,6 @@ import java.util.Map;
 @Setter
 @AllArgsConstructor
 public class RuleContext {
-    private List<Transaction> transactionList;
     private TenantRule tenantRule;
     private Map<String,String> params;
-    private LocalDate lookBackDays;
 }

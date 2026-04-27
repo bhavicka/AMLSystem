@@ -25,6 +25,10 @@ public class Alert extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "case_id")
     private Case caseId;
+
+    @Column(name = "alert_number")
+    private String alertNumber;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM) // This tells Hibernate to use the DB's native enum
     @Column(name = "status", columnDefinition = "alert_status")
@@ -36,4 +40,10 @@ public class Alert extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "transaction_id")
     )
     private List<Transaction> transactions;
+
+    @Column(name = "client_number",nullable = false)
+    private String clientNumber;
+
+    @Column(name = "alert_hash",nullable = false,unique = true)
+    private String alertHash;
 }
