@@ -5,6 +5,7 @@ import com.tss.AmlSystem.dto.request.*;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
 import com.tss.AmlSystem.dto.response.JwtResponse;
 import com.tss.AmlSystem.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,21 +27,21 @@ public class AuthController {
 
     @PostMapping("/banks/register")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
-    public ResponseEntity<String> registerBank(@RequestBody BankRegisterDto bankRegisterDto){
+    public ResponseEntity<String> registerBank(@RequestBody@Valid BankRegisterDto bankRegisterDto){
         log.info("{} Received request to register bank: {}", LogTag.SYSTEM.getValue(), bankRegisterDto.bankName());
         return ResponseEntity.ok(authService.registerBank(bankRegisterDto));
     }
 
     @PostMapping("/bank-officers/register")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<ComplianceOfficerRegisteredDto> registerComplianceOfficer(@RequestBody ComplianceOfficerRegisterDto complianceOfficerRegisterDto){
+    public ResponseEntity<ComplianceOfficerRegisteredDto> registerComplianceOfficer(@RequestBody@Valid ComplianceOfficerRegisterDto complianceOfficerRegisterDto){
         log.info("{} Received request to register Compliance Officer", LogTag.SYSTEM.getValue());
         return ResponseEntity.ok(authService.registerComplianceOfficer(complianceOfficerRegisterDto));
     }
 
     @PostMapping("/update-password")
     @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<String> updatePassword(@RequestBody PasswordChangeRequestDto request){
+    public ResponseEntity<String> updatePassword(@RequestBody@Valid PasswordChangeRequestDto request){
         log.info("{} Received request to update password for user: {}", LogTag.SYSTEM.getValue(), request.email());
         if(authService.updatePassword(request))
             return ResponseEntity.ok("Password updated successfully");
@@ -51,12 +52,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<JwtResponse> login(@RequestBody@Valid LoginRequest loginRequest){
         log.info("{} Received login request for user: {}", LogTag.SYSTEM.getValue(), loginRequest.email());
         return ResponseEntity.ok(authService.login(loginRequest));
     }
     @PostMapping("/refreshtoken")
-    public ResponseEntity<JwtResponse> refreshToken(@RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<JwtResponse> refreshToken(@RequestBody@Valid TokenRefreshRequest request) {
         log.info("{} Received refresh token request", LogTag.SYSTEM.getValue());
         return ResponseEntity.ok(authService.refreshToken(request));
     }

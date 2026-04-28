@@ -10,12 +10,6 @@ import java.util.List;
 @Setter
 public class AlertDashboardDto {
     private List<GeneratedAlertDto> alerts;
-
-    private int page;
-    private int size;
-    private long totalElements;
-    private int totalPages;
-
     // filters applied (optional but useful)
     private String ruleName;
     private String severity;

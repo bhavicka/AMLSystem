@@ -22,7 +22,7 @@ public class RootController {
     private final RuleEngineService ruleEngineService;
 
     @PostMapping
-    public ResponseEntity<String> createSchema(@RequestParam String name){
+    public ResponseEntity<String> createSchema(@RequestParam(required = true) String name){
         tenantSchemaService.createSchema(name);
         return ResponseEntity.ok().build();
     }
