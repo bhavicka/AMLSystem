@@ -22,10 +22,13 @@ import org.springframework.validation.DataBinder;
 import org.springframework.validation.SmartValidator;
 
 import java.util.List;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
 @StepScope
+@Slf4j
 public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDto, Account>, StepExecutionListener, SkipListener<AccountBatchProcessDto, Account> {
 
     private final AccountMapper accountMapper;
@@ -43,6 +46,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
         fileValidator = factory.getValidator(FileType.ACCOUNTS);
         Long fileId = stepExecution.getJobParameters().getLong("fileId");
         this.fileEntity = fileValidator.getFile(fileId);
+        log.info("{} Initialized AccountItemProcessor for File ID: {}", LogTag.BATCH.getValue(), fileId);
     }
 
     @Override
@@ -65,6 +69,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
             error.setFieldName("clientNumber");
             error.setErrorMessage("Customer with client number " + dto.getClientNumber() + " does not exist.");
             fileValidator.saveValidationErrors(List.of(error));
+            log.warn("{} Skipping account for clientNumber {} at row {} because customer does not exist", LogTag.BATCH.getValue(), dto.getClientNumber(), rowNumber);
             return null; // Skip this row
         }
         try {
@@ -78,6 +83,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
 
     @Override
     public void onSkipInRead(Throwable t) {
+        log.warn("{} Skipping item in read phase: {}", LogTag.BATCH.getValue(), t.getMessage());
         if (t instanceof FlatFileParseException ffpe) {
             FileValidationErrors error = new FileValidationErrors();
             error.setFile(fileEntity);
@@ -90,6 +96,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
 
     @Override
     public void onSkipInWrite(Account item, Throwable t) {
+        log.warn("{} Skipping account write due to error: {}", LogTag.BATCH.getValue(), t.getMessage());
         FileValidationErrors error = new FileValidationErrors();
         error.setFile(fileEntity);
         error.setRowNumber(0);
@@ -100,6 +107,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
 
     @Override
     public void onSkipInProcess(AccountBatchProcessDto item, Throwable t) {
+        log.warn("{} Skipping item processing at row: {} due to error: {}", LogTag.BATCH.getValue(), item.getRowNumber(), t.getMessage());
         FileValidationErrors error = new FileValidationErrors();
         error.setFile(fileEntity);
         error.setRowNumber(item.getRowNumber());
@@ -109,6 +117,7 @@ public class AccountItemProcessor implements ItemProcessor<AccountBatchProcessDt
     }
 
     private void handleValidationErrors(BindingResult results, File fileEntity, int rowNumber) {
+        log.debug("{} Validation failed for row {} with {} errors", LogTag.BATCH.getValue(), rowNumber, results.getErrorCount());
         List<FileValidationErrors> errorList = results.getFieldErrors().stream()
                 .map(fieldError -> {
                     FileValidationErrors error = new FileValidationErrors();

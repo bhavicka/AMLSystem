@@ -20,10 +20,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.DataBinder;
 import org.springframework.validation.SmartValidator;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
 @StepScope
+@Slf4j
 public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcessDto, Customer>, StepExecutionListener, SkipListener<CustomerBatchProcessDto, Customer> {
 
     private final CustomerMapper customerMapper;
@@ -38,6 +41,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
         fileValidator = factory.getValidator(FileType.CUSTOMERS);
         Long fileId = stepExecution.getJobParameters().getLong("fileId");
         this.fileEntity = fileValidator.getFile(fileId);
+        log.info("{} Initialized CustomerItemProcessor for File ID: {}", LogTag.BATCH.getValue(), fileId);
     }
 
     @Override
@@ -60,6 +64,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
 
     @Override
     public void onSkipInRead(Throwable t) {
+        log.warn("{} Skipping item in read phase: {}", LogTag.BATCH.getValue(), t.getMessage());
         if (t instanceof FlatFileParseException ffpe) {
             FileValidationErrors error = new FileValidationErrors();
             error.setFile(fileEntity);
@@ -72,6 +77,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
 
     @Override
     public void onSkipInWrite(Customer item, Throwable t) {
+        log.warn("{} Skipping customer write due to error: {}", LogTag.BATCH.getValue(), t.getMessage());
         FileValidationErrors error = new FileValidationErrors();
         error.setFile(fileEntity);
         error.setRowNumber(0); // Writer doesn't easily give row number
@@ -82,6 +88,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
 
     @Override
     public void onSkipInProcess(CustomerBatchProcessDto item, Throwable t) {
+        log.warn("{} Skipping item processing at row: {} due to error: {}", LogTag.BATCH.getValue(), item.getRowNumber(), t.getMessage());
         FileValidationErrors error = new FileValidationErrors();
         error.setFile(fileEntity);
         error.setRowNumber(item.getRowNumber());
@@ -91,6 +98,7 @@ public class CustomerItemProcessor implements ItemProcessor<CustomerBatchProcess
     }
 
     private void handleValidationErrors(BindingResult results, File fileEntity, int rowNumber) {
+        log.debug("{} Validation failed for row {} with {} errors", LogTag.BATCH.getValue(), rowNumber, results.getErrorCount());
         List<FileValidationErrors> errorList = results.getFieldErrors().stream()
                 .map(fieldError -> {
                     FileValidationErrors error = new FileValidationErrors();

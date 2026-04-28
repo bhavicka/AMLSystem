@@ -13,11 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.List;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 
 @RequiredArgsConstructor
 @Service
 @Abstract
+@Slf4j
 public abstract class FileValidator {
     protected final FileRepository fileRepository;
     protected final FileValidationErrorsRepository fileValidationErrorsRepository;
@@ -28,6 +31,7 @@ public abstract class FileValidator {
 
     public void saveValidationErrors(List<FileValidationErrors> errors) {
         if (errors != null && !errors.isEmpty()) {
+            log.info("{} Saving {} file validation errors", LogTag.SYSTEM.getValue(), errors.size());
             fileValidationErrorsRepository.saveAll(errors);
         }
     }
@@ -68,6 +72,7 @@ public abstract class FileValidator {
                 errors.add(buildError(file, rowNumber, field,  "Value cannot be negative"));
             }
         } catch (NumberFormatException ex) {
+            log.debug("{} Invalid number format: {}", LogTag.BATCH.getValue(), value);
             errors.add(buildError(file, rowNumber, field, message));
         }
 

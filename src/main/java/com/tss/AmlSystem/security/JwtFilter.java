@@ -19,7 +19,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -39,6 +42,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     .toList() : List.of();
 
             TenantContext.setCurrentTenant(schemaName);
+            log.debug("{} {} Setting tenant context to: {} for user: {}", LogTag.SECURITY.getValue(), LogTag.TENANT.getValue(), schemaName, username);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -48,6 +52,7 @@ public class JwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             TenantContext.clear();
+            log.debug("{} Cleared tenant context after request processing", LogTag.TENANT.getValue());
         }
     }
 

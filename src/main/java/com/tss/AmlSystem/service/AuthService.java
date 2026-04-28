@@ -30,6 +30,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import com.tss.AmlSystem.entity.enums.LogTag;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -38,6 +40,7 @@ import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
     private final TenantMapper tenantMapper;
     private final TenantUserMapper tenantUserMapper;
@@ -56,6 +59,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
 
     public String registerBank(BankRegisterDto bankRegisterDto){
+        log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         String schemaName = tenant.getBankName().replaceAll("\\s+", "_").toLowerCase() + "_schema";
         tenant.setSchemaName(schemaName);
@@ -82,12 +86,15 @@ public class AuthService {
                         password
                 )
         );
+        log.info("{} Bank registered successfully with schema: {}", LogTag.TENANT.getValue(), schemaName);
         return "Tenant created";
     }
 
     public ComplianceOfficerRegisteredDto registerComplianceOfficer(ComplianceOfficerRegisterDto complianceOfficerRegisterDto) {
         String currentTenant = TenantContext.getCurrentTenant();
+        log.info("{} Attempting to register Compliance Officer for tenant schema: {}", LogTag.TENANT.getValue(), currentTenant);
         if(currentTenant == null) {
+            log.error("{} {} Missing tenant context during compliance officer registration.", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue());
             throw new RuntimeException("No tenant context found");
         }
         String password = generateSecurePassword();
@@ -109,6 +116,7 @@ public class AuthService {
                         password
                 )
         );
+        log.info("{} Compliance Officer registered successfully: {}", LogTag.TENANT.getValue(), userCredential.getEmail());
         return new ComplianceOfficerRegisteredDto(
                 userCredential.getEmail(),
                 tenantUser.getEmployeeCode(),
@@ -118,15 +126,14 @@ public class AuthService {
 
     @Transactional
     public JwtResponse login(LoginRequest loginRequest) {
-        System.out.println("yahan to aa //");
+        log.info("{} Login attempt for user: {}", LogTag.AUTH.getValue(), loginRequest.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
         );
-        System.out.println("yahan to aa");
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         assert userDetails != null;
-        System.out.println(userDetails.getEmail());
+        log.info("{} Successful authentication for: {}", LogTag.AUTH.getValue(), userDetails.getEmail());
         UserCredential user = userCredentialRepository.findById(userDetails.getId())
                 .orElseThrow();
         user.setLastLoginAt(LocalDateTime.now());
@@ -138,7 +145,6 @@ public class AuthService {
                 userDetails.getSchemaName(),
                 userDetails.getRoles()
         );
-        System.out.println("yahan aaya");
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -158,16 +164,22 @@ public class AuthService {
     }
     @Transactional
     public Boolean updatePassword(PasswordChangeRequestDto passwordChangeRequestDto){
+        log.info("{} Password update requested for: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
         UserCredential userCredential = userCredentialRepository.findByEmail(passwordChangeRequestDto.email())
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + passwordChangeRequestDto.email()));
+                .orElseThrow(() -> {
+                    log.warn("{} User not found for password update: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
+                    return new RuntimeException("User not found with email: " + passwordChangeRequestDto.email());
+                });
         if(userCredential.getIsFirstLogin()){
             userCredential.setPasswordHash(passwordEncoder.encode(passwordChangeRequestDto.newPassword()));
             userCredential.setIsFirstLogin(false);
+            log.info("{} Password successfully updated for: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
         }
         return true;
     }
     public JwtResponse refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.refreshToken();
+        log.info("{} Refresh token process started", LogTag.AUTH.getValue());
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
@@ -180,7 +192,7 @@ public class AuthService {
                             List.of(user.getRole().name())
                     );
 
-                    // Return response with new JWT and existing/new refresh token
+                    log.info("{} Refresh token successful for: {}", LogTag.AUTH.getValue(), user.getEmail());
                     return new JwtResponse(
                             token,
                             "Bearer",
@@ -190,7 +202,10 @@ public class AuthService {
                             List.of(user.getRole().name())
                     );
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .orElseThrow(() -> {
+                    log.error("{} {} Invalid or missing refresh token", LogTag.AUTH.getValue(), LogTag.SECURITY.getValue());
+                    return new RuntimeException("Refresh token is not in database!");
+                });
     }
     private String generateSecurePassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";

@@ -11,9 +11,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import com.tss.AmlSystem.entity.enums.LogTag;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenService {
 
     @Value("${app.jwtRefreshExpirationMs}")
@@ -27,6 +30,7 @@ public class RefreshTokenService {
 
     @Transactional
     public String createRefreshToken(Long userId) {
+        log.info("{} Creating refresh token for user ID: {}", LogTag.AUTH.getValue(), userId);
         UserCredential user = userCredentialRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
@@ -41,6 +45,7 @@ public class RefreshTokenService {
 
     public UserCredential verifyExpiration(UserCredential user) {
         if (user.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
+            log.warn("{} {} Refresh token expired for user: {}", LogTag.AUTH.getValue(), LogTag.SECURITY.getValue(), user.getEmail());
             // Token has expired - clear it from DB
             user.setRefreshToken(null);
             user.setRefreshTokenExpiry(null);

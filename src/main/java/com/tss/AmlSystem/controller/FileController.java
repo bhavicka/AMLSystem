@@ -14,10 +14,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import com.tss.AmlSystem.entity.enums.LogTag;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/files")
+@Slf4j
 public class FileController {
 
     private final FileUploadService fileUploadService;
@@ -27,14 +30,17 @@ public class FileController {
     public ResponseEntity<FileUploadProcessDto> uploadFile(
             @RequestPart("file") MultipartFile multipartFile,
             @RequestPart("fileUploadDto") FileUploadDto fileUploadDto) throws Exception {
-        System.out.println("here");
+        log.info("{} Received file upload request. FileType: {}", LogTag.SYSTEM.getValue(), fileUploadDto.getFileType());
         if (multipartFile.isEmpty()) {
+            log.warn("{} Uploaded file is empty", LogTag.SYSTEM.getValue());
             return ResponseEntity.badRequest().build();
         }
         if (!StringUtils.hasText(multipartFile.getOriginalFilename())
                 || !multipartFile.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+            log.warn("{} Invalid file name or extension: {}", LogTag.SYSTEM.getValue(), multipartFile.getOriginalFilename());
             return ResponseEntity.badRequest().build();
         }
+        log.info("{} Delegating file upload to FileUploadService", LogTag.SYSTEM.getValue());
         return ResponseEntity.ok(fileUploadService.uploadFile(multipartFile, fileUploadDto.getFileType()));
     }
 }
