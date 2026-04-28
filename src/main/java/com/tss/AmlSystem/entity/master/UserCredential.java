@@ -3,6 +3,10 @@ package com.tss.AmlSystem.entity.master;
 import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
 import com.tss.AmlSystem.entity.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,12 +24,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserCredential extends BaseEntity {
+    @NotBlank
+    @Email
+    @Size(max = 255)
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank
     @Column(nullable = false, name = "password_hash")
     private String passwordHash;
 
+    @NotNull
     @Column(nullable = false, columnDefinition = "global_user_role_enum")
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
