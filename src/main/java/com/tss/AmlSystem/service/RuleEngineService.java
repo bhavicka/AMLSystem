@@ -19,7 +19,7 @@ public class RuleEngineService {
 
     public void execute(){
         List<TenantRule> activeRules=tenantRuleRepository.findByIsActiveTrue();
-        log.info("{} Found {} active rules to execute. Lookback Date: {}", LogTag.RULE.getValue(), activeRules.size(), lookBackDate);
+        log.info("{} Found {} active rules to execute.", LogTag.RULE.getValue(), activeRules.size());
         for(TenantRule rule:activeRules){
             log.debug("{} Delegating execution for Rule: {}", LogTag.RULE.getValue(), rule.getRuleCode());
             executionService.runRule(rule);

@@ -43,7 +43,7 @@ public class RuleExecutionService {
         //build context to give it to evaluate
         RuleContext context=new RuleContext(rule,params);
 
-        log.debug("{} Evaluating {} transactions against rule: {}", LogTag.RULE.getValue(), transactionList.size(), rule.getRuleCode());
+        log.debug("{} Evaluating transactions against rule: {}", LogTag.RULE.getValue(), rule.getRuleCode());
         evaluator.evaluate(context);
     }
 }

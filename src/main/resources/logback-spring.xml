@@ -34,7 +34,7 @@
     <logger name="org.springframework" level="WARN"/>
     <logger name="com.tss.LoanEmiScheduler" level="INFO"/>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="APP_FILE"/>
     </root>

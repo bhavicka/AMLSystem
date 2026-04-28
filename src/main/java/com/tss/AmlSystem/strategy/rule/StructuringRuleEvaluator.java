@@ -22,9 +22,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @Component("STRUCTURING")
 @RequiredArgsConstructor
+@Slf4j
 public class StructuringRuleEvaluator implements RuleEvaluator {
 
     private final AlertService alertService;
@@ -57,7 +60,10 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
                 timeWindowInDays
         );
 
-        if (suspiciousClientsWithRange.isEmpty()) return;
+        if (suspiciousClientsWithRange.isEmpty()) {
+            log.info("{} No initial structuring patterns found", LogTag.RULE.getValue());
+            return;
+        }
         Map<String, Set<Long>> clientTxnMap=new HashMap<>();
 
 
@@ -82,7 +88,10 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
             }
         }
 
-        if(clientTxnMap.isEmpty())return;
+        if(clientTxnMap.isEmpty()) {
+            log.info("{} No confirmed structuring chunks found after filtering", LogTag.RULE.getValue());
+            return;
+        }
 
 
         for (Map.Entry<String, Set<Long>> entry : clientTxnMap.entrySet()) {
@@ -103,6 +112,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
 
 
             alertService.saveAlert(client,ruleContext,transactions,hash);
+            log.info("{} {} Generated Structuring Alert for Account: {}", LogTag.RULE.getValue(), LogTag.SECURITY.getValue(), client);
         }
 
     }
