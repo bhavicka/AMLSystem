@@ -1,14 +1,9 @@
 package com.tss.AmlSystem.utils;
 
 public class UniqueNumberGenerator {
-    public static String generateAlertNumber() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder("AL-");
-
-        for (int i = 0; i < 4; i++) {
-            int index = (int) (Math.random() * chars.length());
-            sb.append(chars.charAt(index));
-        }
+    public static String generateIdentifierNumber(String prefix) {
+        StringBuilder sb = new StringBuilder(prefix);
+        sb.append(System.currentTimeMillis());
         return sb.toString();
     }
 }

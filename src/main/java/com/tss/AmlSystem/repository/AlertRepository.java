@@ -1,9 +1,11 @@
 package com.tss.AmlSystem.repository;
 
 import com.tss.AmlSystem.entity.tenant.Alert;
+import com.tss.AmlSystem.entity.tenant.Case;
 import com.tss.AmlSystem.entity.tenant.TenantRule;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.models.AlertDetailProjection;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +18,14 @@ import java.util.Optional;
 
 @Repository
 public interface AlertRepository extends JpaRepository<Alert,Long> {
+
+    @Query("SELECT a FROM Alert a WHERE a.caseId.id = :caseId")
+    List<Alert> findAllByCaseId(Long caseId);
+
+    Optional<Alert> findByAlertNumber(String alertNumber);
+
+    @EntityGraph(attributePaths = {"tenantRule"})
+    List<Alert> findAll();
 
     @Query("""
     SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
@@ -33,7 +43,8 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
 
         c.caseReferenceNumber AS caseReferenceNumber,
         c.status AS caseStatus,
-        CONCAT(u.firstName,' ',u.lastName) AS assignedTo,
+        u.email AS assignedTo,
+        SUM(t.amount) AS totalAmount,
 
         COUNT(t) AS transactionCount
 
@@ -47,7 +58,7 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
 
     GROUP BY
         a.alertNumber, r.ruleName, r.severityRate, a.status,
-        c.caseReferenceNumber, c.status, assignedTo
+        c.caseReferenceNumber, c.status, u.email
 """)
     AlertDetailProjection findAlertDetail(@Param("alertId") Long alertId);
 

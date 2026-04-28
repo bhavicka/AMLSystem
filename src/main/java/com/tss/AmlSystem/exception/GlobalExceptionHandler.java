@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
         log.warn("{} No such username: {}", LogTag.SYSTEM.getValue(), exception.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                exception.getMessage()+" not found.",
+                "Username not found.",
                 System.currentTimeMillis()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
         log.error("{} [RUNTIME ERROR] ", LogTag.SYSTEM.getValue(), exception);
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                exception.getMessage(),
+                "An unexpected error occurred.",
                 System.currentTimeMillis()
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
