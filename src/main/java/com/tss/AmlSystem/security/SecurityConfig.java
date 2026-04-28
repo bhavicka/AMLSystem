@@ -19,12 +19,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
     public JwtFilter jwtFilter(){
         return new JwtFilter();
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -39,6 +39,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refreshtoken").permitAll()
                         .anyRequest().authenticated())

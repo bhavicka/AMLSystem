@@ -40,7 +40,6 @@ public class EmailService {
             log.info("{} Registration email sent successfully to: {}", LogTag.EMAIL.getValue(), to);
         } catch (MessagingException e) {
             log.error("{} Failed to send email to {}: {}", LogTag.EMAIL.getValue(), to, e.getMessage());
-            throw new IllegalStateException("Failed to send email");
         }
     }
 }
