@@ -23,7 +23,7 @@ public class AlertService {
     private final AlertMapper alertMapper;
 
     public AlertDetailDto getAlertDetail(String alertNumber) {
-        Long alertId = alertRepository.findAlertIdByAlertNumber(alertNumber);
+        Long alertId = alertRepository.findAlertIdByAlertNumber(alertNumber).orElseThrow();
         AlertDetailProjection projection = alertRepository.findAlertDetail(alertId);
         BigDecimal totalAmount = projection.getTotalAmount() != null
                 ? projection.getTotalAmount()
