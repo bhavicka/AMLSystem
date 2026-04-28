@@ -1,6 +1,8 @@
 package com.tss.AmlSystem.security;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.security.SignatureException;
 import java.util.List;
 import com.tss.AmlSystem.entity.enums.LogTag;
 import lombok.extern.slf4j.Slf4j;
@@ -32,22 +35,31 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String jwt = parseJwt(request);
-        if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-            String username = jwtUtils.getUserNameFromJwtToken(jwt);
-            String schemaName = jwtUtils.getSchemaFromJwtToken(jwt);
-            List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
-            List<SimpleGrantedAuthority> authorities = (roles != null) ? roles.stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .toList() : List.of();
+        try{
+            String jwt = parseJwt(request);
+            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                String schemaName = jwtUtils.getSchemaFromJwtToken(jwt);
+                List<String> roles = jwtUtils.getRolesFromJwtToken(jwt);
+                List<SimpleGrantedAuthority> authorities = (roles != null) ? roles.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList() : List.of();
 
-            TenantContext.setCurrentTenant(schemaName);
-            log.debug("{} {} Setting tenant context to: {} for user: {}", LogTag.SECURITY.getValue(), LogTag.TENANT.getValue(), schemaName, username);
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, authorities);
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                TenantContext.setCurrentTenant(schemaName);
+                log.debug("{} {} Setting tenant context to: {} for user: {}", LogTag.SECURITY.getValue(), LogTag.TENANT.getValue(), schemaName, username);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("jwt_error", "Token has expired");
+        } catch (MalformedJwtException e) {
+            request.setAttribute("jwt_error", "Token is malformed");
+        } catch (Exception e) {
+            request.setAttribute("jwt_error", "Authentication failed: " + e.getMessage());
         }
+
         try {
             filterChain.doFilter(request, response);
         } finally {

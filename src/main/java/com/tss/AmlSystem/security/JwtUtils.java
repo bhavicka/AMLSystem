@@ -2,6 +2,7 @@ package com.tss.AmlSystem.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,16 +61,11 @@ public class JwtUtils {
     }
 
     public boolean validateJwtToken(String authToken) {
-        try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(authToken);
-            return true;
-        } catch (Exception e) {
-            log.warn("{} JWT Token validation failed: {}", LogTag.SECURITY.getValue(), e.getMessage());
-        }
-        return false;
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(authToken);
+        return true;
     }
     public List<String> getRolesFromJwtToken(String token) {
         Claims claims = Jwts.parser()
