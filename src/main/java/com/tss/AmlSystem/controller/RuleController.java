@@ -2,6 +2,7 @@ package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
 import com.tss.AmlSystem.service.TenantRuleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ public class RuleController {
     private final TenantRuleService tenantRuleService;
 
     @PostMapping("/rules/assign")
-    public ResponseEntity<String> assignRules(@RequestBody RuleAssignmentDto ruleAssignmentDto){
+    public ResponseEntity<String> assignRules(@RequestBody@Valid RuleAssignmentDto ruleAssignmentDto){
         if(tenantRuleService.assignRules(ruleAssignmentDto))
             return ResponseEntity.ok("Rules assigned successfully");
         else

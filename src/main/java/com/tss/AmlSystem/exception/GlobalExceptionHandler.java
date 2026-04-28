@@ -1,9 +1,11 @@
 package com.tss.AmlSystem.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.tss.AmlSystem.entity.enums.LogTag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -16,6 +18,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -85,6 +89,20 @@ public class GlobalExceptionHandler {
                         System.currentTimeMillis()),
                 HttpStatus.FORBIDDEN
         );
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleJsonErrors(HttpMessageNotReadableException ex) {
+        Map<String, String> error = new HashMap<>();
+
+        if (ex.getCause() instanceof InvalidFormatException ife) {
+            String fieldName = ife.getPath().get(0).getFieldName();
+            String invalidValue = ife.getValue().toString();
+            error.put("message", String.format("Invalid value '%s' for field '%s'", invalidValue, fieldName));
+        } else {
+            error.put("message", "Malformed JSON request");
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)

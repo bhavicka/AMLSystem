@@ -3,7 +3,9 @@ package com.tss.AmlSystem.controller;
 import com.tss.AmlSystem.dto.request.FileUploadDto;
 import com.tss.AmlSystem.dto.response.FileUploadProcessDto;
 import com.tss.AmlSystem.service.FileUploadService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +31,7 @@ public class FileController {
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<FileUploadProcessDto> uploadFile(
             @RequestPart("file") MultipartFile multipartFile,
-            @RequestPart("fileUploadDto") FileUploadDto fileUploadDto) throws Exception {
+            @RequestPart("fileUploadDto")@Valid FileUploadDto fileUploadDto) throws Exception {
         log.info("{} Received file upload request. FileType: {}", LogTag.SYSTEM.getValue(), fileUploadDto.getFileType());
         if (multipartFile.isEmpty()) {
             log.warn("{} Uploaded file is empty", LogTag.SYSTEM.getValue());

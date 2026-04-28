@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AlertRepository extends JpaRepository<Alert,Long> {
@@ -71,4 +72,6 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
             @Param("lookbackStart") LocalDateTime lookbackStart
     );
 
+    @Query("SELECT a.id FROM Alert a WHERE a.alertNumber = :alertNumber")
+    Optional<Long> findIdByAlertNumber(@Param("alertNumber") String alertNumber);
 }

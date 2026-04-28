@@ -23,9 +23,9 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getAlertDashboard());
     }
 
-    @GetMapping("/alerts/{alertId}")
+    @GetMapping("/alerts/{alertNumber}")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<AlertDetailDto> getAlertDetail(@PathVariable Long alertId){
-        return ResponseEntity.ok(alertService.getAlertDetail(alertId));
+    public ResponseEntity<AlertDetailDto> getAlertDetail(@PathVariable String alertNumber){
+        return ResponseEntity.ok(alertService.getAlertDetail(alertNumber));
     }
 }
