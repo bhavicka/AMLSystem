@@ -2,18 +2,27 @@ package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.request.RuleParameterUpdateDto;
+import com.tss.AmlSystem.dto.response.RuleDashboardDto;
+import com.tss.AmlSystem.dto.response.RuleDetailDto;
+import com.tss.AmlSystem.dto.response.RuleInlineDto;
+import com.tss.AmlSystem.dto.response.RuleParameterUpdatedDto;
+import com.tss.AmlSystem.entity.master.MasterRuleParameter;
 import com.tss.AmlSystem.entity.master.RuleTemplate;
 import com.tss.AmlSystem.entity.master.Tenant;
 import com.tss.AmlSystem.entity.master.TenantRuleAssignment;
 import com.tss.AmlSystem.entity.tenant.TenantRule;
-import com.tss.AmlSystem.repository.RuleTemplateRepository;
-import com.tss.AmlSystem.repository.TenantRepository;
-import com.tss.AmlSystem.repository.TenantRuleAssignmentRepository;
-import com.tss.AmlSystem.repository.TenantRuleRepository;
+import com.tss.AmlSystem.entity.tenant.TenantRuleParameter;
+import com.tss.AmlSystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import com.tss.AmlSystem.entity.enums.LogTag;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +35,7 @@ public class TenantRuleService {
     private final TenantRuleAssignmentRepository tenantRuleAssignmentRepository;
     private final TenantRepository tenantRepository;
     private final RuleTemplateRepository ruleTemplateRepository;
+    private final TenantRuleParameterRepository tenantRuleParameterRepository;
 
     public boolean assignRules(RuleAssignmentDto ruleAssignmentDto){
         log.info("{} Assigning rules for schema: {}", LogTag.TENANT.getValue(), ruleAssignmentDto.schemaName());
@@ -54,5 +64,72 @@ public class TenantRuleService {
             TenantContext.clear();
         }
         return true;
+    }
+
+    public RuleDashboardDto getTenantRuleList(){
+        List<TenantRule> ruleList = tenantRuleRepository.findByIsActiveTrue();
+        List<RuleInlineDto> ruleInlineDtoList = ruleList.stream()
+                .map(
+                        r -> new RuleInlineDto(
+                                r.getRuleName(),
+                                r.getSeverityRate())
+                )
+                .toList();
+        return new RuleDashboardDto(ruleInlineDtoList);
+    }
+
+
+    public RuleDetailDto getRuleDetails(String ruleCode){
+        ruleCode = ruleCode.toUpperCase(Locale.ROOT);
+        String finalRuleCode = ruleCode;
+        TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode)
+                .orElseThrow(() -> new RuntimeException("Rule not found with code: " + finalRuleCode));
+        RuleDetailDto ruleDetailDto = new RuleDetailDto();
+        ruleDetailDto.setRuleCode(tenantRule.getRuleCode());
+        ruleDetailDto.setRuleName(tenantRule.getRuleName());
+        ruleDetailDto.setDescription(tenantRule.getDescription());
+        ruleDetailDto.setSeverity(tenantRule.getSeverityRate());
+        List<TenantRuleParameter> tenantRuleParameterList = tenantRuleParameterRepository
+                .findByRule(tenantRule);
+        Map<String, String> parameters = new HashMap<>();
+        for(TenantRuleParameter parameter: tenantRuleParameterList){
+            parameters.put(parameter.getParamKey(), parameter.getParamValue());
+        }
+        ruleDetailDto.setParameters(parameters);
+        return ruleDetailDto;
+    }
+
+    public RuleParameterUpdatedDto updateRuleParameters(String ruleCode, RuleParameterUpdateDto ruleParameterUpdateDto){
+        ruleCode = ruleCode.toUpperCase(Locale.ROOT);
+        Map<String, String> updatedParameters = ruleParameterUpdateDto.getUpdatedParameters();
+
+        TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode).orElseThrow();
+        List<TenantRuleParameter> tenantRuleParameterList = tenantRuleParameterRepository.findByRule(tenantRule);
+
+        for(TenantRuleParameter oldParameter: tenantRuleParameterList){
+            String paramKey = oldParameter.getParamKey();
+            if(updatedParameters.containsKey(paramKey)){
+                Long newValue  = Long.parseLong(updatedParameters.get(paramKey));
+                Long min;
+                if(oldParameter.getMinValue() != null){
+                    min = Long.parseLong(oldParameter.getMinValue());
+                    if(newValue<min)
+                        throw new IllegalArgumentException("New value of parameter is less than minimum value allowed.");
+                }
+                Long max;
+                if(oldParameter.getMinValue() != null){
+                    max = Long.parseLong(oldParameter.getMaxValue());
+                    if(newValue>max)
+                        throw new IllegalArgumentException("New value of parameter is greater than maximum value allowed.");
+                }
+                oldParameter.setParamValue(newValue.toString());
+                tenantRuleParameterRepository.save(oldParameter);
+            }
+        }
+        updatedParameters.clear();
+        for(TenantRuleParameter parameter: tenantRuleParameterList){
+            updatedParameters.put(parameter.getParamKey(), parameter.getParamValue());
+        }
+        return new RuleParameterUpdatedDto(ruleCode, updatedParameters);
     }
 }

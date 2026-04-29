@@ -10,4 +10,5 @@ public interface TenantRuleRepository extends JpaRepository<TenantRule,Long> {
     List<TenantRule> findByIsActiveTrue();
 
     Optional<TenantRule> findByRuleCode(String ruleCode);
+    Optional<TenantRule> findByRuleName(String ruleName);
 }
