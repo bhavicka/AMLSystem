@@ -31,7 +31,7 @@ public class StrFilling extends BaseEntity {
     private String supportingNotes;
 
     @NotBlank
-    @Size(max = 8)
+//    @Size(max = 8)
     @Column(unique = true, nullable = false, name = "reference_number")
     private String referenceNumber;
 

@@ -3,7 +3,9 @@ package com.tss.AmlSystem.utils;
 public class UniqueNumberGenerator {
     public static String generateIdentifierNumber(String prefix) {
         StringBuilder sb = new StringBuilder(prefix);
-        sb.append(System.currentTimeMillis());
+        Long time=System.currentTimeMillis();
+        sb.append(time.toString().substring(0,2));
+        System.out.println(sb);
         return sb.toString();
     }
 }

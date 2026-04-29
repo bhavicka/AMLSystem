@@ -40,6 +40,7 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
         r.ruleName AS brokenRuleName,
         r.severityRate AS severity,
         a.status AS status,
+        a.clientNumber AS clientNumber,
 
         c.caseReferenceNumber AS caseReferenceNumber,
         c.status AS caseStatus,
@@ -58,7 +59,7 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
 
     GROUP BY
         a.alertNumber, r.ruleName, r.severityRate, a.status,
-        c.caseReferenceNumber, c.status, u.email
+        c.caseReferenceNumber, c.status, u.email,a.clientNumber
 """)
     AlertDetailProjection findAlertDetail(@Param("alertId") Long alertId);
 

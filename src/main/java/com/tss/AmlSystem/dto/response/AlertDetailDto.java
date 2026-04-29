@@ -16,6 +16,7 @@ public class AlertDetailDto {
     private String brokenRuleName;
     private Severity severity;
     private AlertStatus status;
+    private String clientNumber;
 
     private String caseReferenceNumber;
     private CaseStatus caseStatus;
