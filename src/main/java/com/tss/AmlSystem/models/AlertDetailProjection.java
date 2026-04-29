@@ -11,7 +11,6 @@ public interface AlertDetailProjection {
     String getBrokenRuleName();
     Severity getSeverity();
     AlertStatus getStatus();
-    String getClientNumber();
 
     String getCaseReferenceNumber();
     CaseStatus getCaseStatus();

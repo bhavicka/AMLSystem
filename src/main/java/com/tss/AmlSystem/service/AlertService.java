@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.math.BigDecimal;
@@ -28,8 +27,8 @@ import java.util.List;
 public class AlertService {
     private final AlertRepository alertRepository;
     private final AlertMapper alertMapper;
+    private final TenantUserRepository tenantUserRepository;
 
-    @Transactional(readOnly = true)
     public AlertDetailDto getAlertDetail(String alertNumber) {
         Long alertId = alertRepository.findAlertIdByAlertNumber(alertNumber).orElseThrow(
                 ()->new RuntimeException("Alert not found with alert number: "+alertNumber)
@@ -38,7 +37,7 @@ public class AlertService {
         String currentUserEmail= authentication.getName();
 
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("BANK_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_BANK_ADMIN"));
 
         AlertDetailProjection projection = alertRepository.findAlertDetail(alertId);
         String assignedUserEmail = projection.getAssignedTo();
@@ -55,7 +54,6 @@ public class AlertService {
         return alertMapper.toAlertDetailDto(projection,projection.getTotalAmount(), transactions);
     }
 
-    @Transactional(readOnly = true)
     public AlertDashboardDto getAlertDashboard(){
         AlertDashboardDto alertDashboardDto=new AlertDashboardDto();
 

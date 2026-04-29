@@ -18,6 +18,4 @@ public interface CaseRepository extends JpaRepository<Case,Long> {
 
     @Query("SELECT c FROM Case c WHERE c.caseReferenceNumber = :caseRefNumber")
     Optional<Case> findByCaseReferenceNumber(String caseRefNumber);
-
-    List<Case> findAll();
 }

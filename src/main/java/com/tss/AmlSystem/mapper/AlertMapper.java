@@ -10,7 +10,6 @@ import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 
 @Mapper(componentModel = "spring",uses = AlertTransactionMapper.class)
 public interface AlertMapper {
@@ -36,7 +35,6 @@ public interface AlertMapper {
     @Mapping(source = "totalAmount", target = "totalAmount")
 
     @Mapping(source = "transactions", target = "transactions")
-    @Mapping(source = "projection.clientNumber",target = "clientNumber")
     AlertDetailDto toAlertDetailDto(AlertDetailProjection projection, BigDecimal totalAmount,
                                     List<Transaction> transactions);
 }

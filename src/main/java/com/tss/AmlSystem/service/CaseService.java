@@ -2,7 +2,6 @@ package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
-import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Case;
@@ -47,15 +46,12 @@ public class CaseService {
         newCase.setStatus(CaseStatus.OPEN);
         newCase.setAssignedBy(bankAdmin);
 
-
-
         caseRepository.save(newCase);
 
         for(String alertNumber:alertNumbers){
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
                     .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
             alert.setCaseId(newCase);
-            alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
             alertRepository.save(alert);
 
         }
@@ -68,7 +64,7 @@ public class CaseService {
         String currentUserEmail=  authentication.getName();
 
         boolean isAdmin=authentication.getAuthorities().stream()
-                .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
+                .anyMatch(a->a.getAuthority().equals("ROLE_BANK_ADMIN"));
 
         List<Case> cases;
         if(isAdmin){
@@ -80,7 +76,6 @@ public class CaseService {
         return caseMapper.toResponseDtoList(cases);
     }
 
-    @Transactional(readOnly = true)
     public CaseDetailDto getCaseDetail(String caseReferenceNumber){
         Case c=caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
                 .orElseThrow(()->new RuntimeException("Case not found with reference number: "+caseReferenceNumber));
@@ -91,7 +86,7 @@ public class CaseService {
         List<Alert> alerts=alertRepository.findAllByCaseId(c.getId());
 
         boolean isAdmin=authentication.getAuthorities().stream()
-                .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
+                .anyMatch(a->a.getAuthority().equals("ROLE_BANK_ADMIN"));
 
         if(!isAdmin && !c.getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)){
             throw new RuntimeException("You are not authorized to view cases assigned to another officer.");
