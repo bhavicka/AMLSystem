@@ -13,4 +13,5 @@ import lombok.Setter;
 public class RuleInlineDto {
     String ruleName;
     Severity severity;
+    String ruleCode;
 }
