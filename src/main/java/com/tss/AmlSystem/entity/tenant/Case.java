@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Case extends BaseEntity {
     @NotBlank
-    @Size(max = 8)
     @Column(nullable = false, unique = true, name = "case_reference_number")
     private String caseReferenceNumber;
 

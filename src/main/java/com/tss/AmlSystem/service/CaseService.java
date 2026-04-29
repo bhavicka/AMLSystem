@@ -1,10 +1,13 @@
 package com.tss.AmlSystem.service;
 
+import com.tss.AmlSystem.dto.request.CaseEscalateDto;
 import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
+import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Case;
+import com.tss.AmlSystem.entity.tenant.StrFilling;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.mapper.CaseMapper;
@@ -52,10 +55,9 @@ public class CaseService {
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
                     .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
             alert.setCaseId(newCase);
+            alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
             alertRepository.save(alert);
-
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -97,4 +99,31 @@ public class CaseService {
 
         return dto;
     }
+
+    public CaseDetailDto dismissCase(String caseReferenceNumber){
+        Case case_ = caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
+                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseReferenceNumber));
+        case_.setStatus(CaseStatus.CLOSED);
+        caseRepository.save(case_);
+        return caseMapper.toDetailResponseDto(case_);
+    }
+
+    public CaseDetailDto escalateCase(String caseReferenceNumber, CaseEscalateDto caseEscalateDto){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        Case case_ = caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
+                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseReferenceNumber));
+        if(!case_.getAssignedTo().getEmail().equalsIgnoreCase(email)){
+            throw new RuntimeException("You are not authorized to escalate cases assigned to another officer.");
+        }
+        case_.setStatus(CaseStatus.ESCALATED);
+        caseRepository.save(case_);
+        StrFilling strFilling = new StrFilling();
+        strFilling.setACase(case_);
+        strFilling.setFiledBy(case_.getAssignedTo());
+        strFilling.setSupportingNotes(caseEscalateDto.getNotes());
+        //method to generate pdf
+        return caseMapper.toDetailResponseDto(case_);
+    }
+
 }

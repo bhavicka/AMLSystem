@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.controller;
 
+import com.tss.AmlSystem.dto.request.CaseEscalateDto;
 import com.tss.AmlSystem.dto.request.CaseRequestDto;
 import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
@@ -37,7 +38,22 @@ public class CaseController {
         return new ResponseEntity<>(caseService.getCaseDetail(caseReferenceNumber), HttpStatus.OK);
     }
 
+    //case escalate
+    //dismiss
+    @PutMapping("/cases/{caseReferenceNumber}")
+    @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
+    public ResponseEntity<CaseDetailDto> changeCaseStatus(
+            @PathVariable String caseReferenceNumber,
+            @RequestParam("action") String action,
+            @RequestBody(required = false) CaseEscalateDto caseEscalateDto
+            ) {
+        if(action.equalsIgnoreCase("escalate")){
 
+        } else if(action.equalsIgnoreCase("dismiss")){
 
+        } else {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 
 }
