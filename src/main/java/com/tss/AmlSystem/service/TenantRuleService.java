@@ -7,17 +7,18 @@ import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
 import com.tss.AmlSystem.dto.response.RuleInlineDto;
 import com.tss.AmlSystem.dto.response.RuleParameterUpdatedDto;
-import com.tss.AmlSystem.entity.master.MasterRuleParameter;
 import com.tss.AmlSystem.entity.master.RuleTemplate;
 import com.tss.AmlSystem.entity.master.Tenant;
 import com.tss.AmlSystem.entity.master.TenantRuleAssignment;
+import com.tss.AmlSystem.entity.tenant.RuleVersionParameters;
 import com.tss.AmlSystem.entity.tenant.TenantRule;
 import com.tss.AmlSystem.entity.tenant.TenantRuleParameter;
+import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import com.tss.AmlSystem.entity.enums.LogTag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,8 @@ public class TenantRuleService {
     private final TenantRepository tenantRepository;
     private final RuleTemplateRepository ruleTemplateRepository;
     private final TenantRuleParameterRepository tenantRuleParameterRepository;
+    private final RuleVersionParametersRepository ruleVersionParametersRepository;
+    private final TenantUserRepository tenantUserRepository;
 
     public boolean assignRules(RuleAssignmentDto ruleAssignmentDto){
         log.info("{} Assigning rules for schema: {}", LogTag.TENANT.getValue(), ruleAssignmentDto.schemaName());
@@ -100,6 +104,7 @@ public class TenantRuleService {
         return ruleDetailDto;
     }
 
+    @Transactional
     public RuleParameterUpdatedDto updateRuleParameters(String ruleCode, RuleParameterUpdateDto ruleParameterUpdateDto){
         ruleCode = ruleCode.toUpperCase(Locale.ROOT);
         Map<String, String> updatedParameters = ruleParameterUpdateDto.getUpdatedParameters();
@@ -108,8 +113,12 @@ public class TenantRuleService {
         List<TenantRuleParameter> tenantRuleParameterList = tenantRuleParameterRepository.findByRule(tenantRule);
 
         for(TenantRuleParameter oldParameter: tenantRuleParameterList){
+            RuleVersionParameters ruleVersionParameters = new RuleVersionParameters();
+            ruleVersionParameters.setRuleParameter(oldParameter);
+
             String paramKey = oldParameter.getParamKey();
             if(updatedParameters.containsKey(paramKey)){
+                ruleVersionParameters.setParamKey(paramKey);
                 Long newValue  = Long.parseLong(updatedParameters.get(paramKey));
                 Long min;
                 if(oldParameter.getMinValue() != null){
@@ -123,7 +132,13 @@ public class TenantRuleService {
                     if(newValue>max)
                         throw new IllegalArgumentException("New value of parameter is greater than maximum value allowed.");
                 }
+                ruleVersionParameters.setOldParamValue(oldParameter.getParamValue());
                 oldParameter.setParamValue(newValue.toString());
+                ruleVersionParameters.setNewParamValue(oldParameter.getParamValue());
+
+                TenantUser tenantUser = tenantUserRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString()).orElseThrow();
+                ruleVersionParameters.setChangedBy(tenantUser);
+                ruleVersionParametersRepository.save(ruleVersionParameters);
                 tenantRuleParameterRepository.save(oldParameter);
             }
         }
@@ -131,6 +146,7 @@ public class TenantRuleService {
         for(TenantRuleParameter parameter: tenantRuleParameterList){
             updatedParameters.put(parameter.getParamKey(), parameter.getParamValue());
         }
+
         return new RuleParameterUpdatedDto(ruleCode, updatedParameters);
     }
 }
