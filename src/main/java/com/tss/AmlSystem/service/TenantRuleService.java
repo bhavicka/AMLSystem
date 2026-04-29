@@ -2,9 +2,11 @@ package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.request.RuleParameterUpdateDto;
 import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
 import com.tss.AmlSystem.dto.response.RuleInlineDto;
+import com.tss.AmlSystem.dto.response.RuleParameterUpdatedDto;
 import com.tss.AmlSystem.entity.master.MasterRuleParameter;
 import com.tss.AmlSystem.entity.master.RuleTemplate;
 import com.tss.AmlSystem.entity.master.Tenant;
@@ -15,6 +17,7 @@ import com.tss.AmlSystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -94,5 +97,39 @@ public class TenantRuleService {
         }
         ruleDetailDto.setParameters(parameters);
         return ruleDetailDto;
+    }
+
+    public RuleParameterUpdatedDto updateRuleParameters(String ruleCode, RuleParameterUpdateDto ruleParameterUpdateDto){
+        ruleCode = ruleCode.toUpperCase(Locale.ROOT);
+        Map<String, String> updatedParameters = ruleParameterUpdateDto.getUpdatedParameters();
+
+        TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode).orElseThrow();
+        List<TenantRuleParameter> tenantRuleParameterList = tenantRuleParameterRepository.findByRule(tenantRule);
+
+        for(TenantRuleParameter oldParameter: tenantRuleParameterList){
+            String paramKey = oldParameter.getParamKey();
+            if(updatedParameters.containsKey(paramKey)){
+                Long newValue  = Long.parseLong(updatedParameters.get(paramKey));
+                Long min;
+                if(oldParameter.getMinValue() != null){
+                    min = Long.parseLong(oldParameter.getMinValue());
+                    if(newValue<min)
+                        throw new IllegalArgumentException("New value of parameter is less than minimum value allowed.");
+                }
+                Long max;
+                if(oldParameter.getMinValue() != null){
+                    max = Long.parseLong(oldParameter.getMaxValue());
+                    if(newValue>max)
+                        throw new IllegalArgumentException("New value of parameter is greater than maximum value allowed.");
+                }
+                oldParameter.setParamValue(newValue.toString());
+                tenantRuleParameterRepository.save(oldParameter);
+            }
+        }
+        updatedParameters.clear();
+        for(TenantRuleParameter parameter: tenantRuleParameterList){
+            updatedParameters.put(parameter.getParamKey(), parameter.getParamValue());
+        }
+        return new RuleParameterUpdatedDto(ruleCode, updatedParameters);
     }
 }
