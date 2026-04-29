@@ -1,14 +1,15 @@
 package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.response.RuleDashboardDto;
+import com.tss.AmlSystem.dto.response.RuleDetailDto;
+import com.tss.AmlSystem.service.RuleService;
 import com.tss.AmlSystem.service.TenantRuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RuleController {
 
     private final TenantRuleService tenantRuleService;
+    private final RuleService ruleService;
 
     @PostMapping("/rules/assign")
     public ResponseEntity<String> assignRules(@RequestBody@Valid RuleAssignmentDto ruleAssignmentDto){
@@ -24,4 +26,29 @@ public class RuleController {
         else
             return ResponseEntity.badRequest().body("One or more rule codes are invalid");
     }
+
+    @GetMapping("/rules")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<RuleDashboardDto> getAllRules(){
+        return ResponseEntity.ok(ruleService.getMasterRulesList());
+    }
+    @GetMapping("/rules/{ruleCode}")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<RuleDetailDto> getRuleDetails(@PathVariable String ruleCode){
+        return ResponseEntity.ok(ruleService.getRuleDetails(ruleCode));
+    }
+    @GetMapping("/bank-rules")
+    @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<RuleDashboardDto> getAllTenantRules(){
+        return ResponseEntity.ok(tenantRuleService.getTenantRuleList());
+    }
+
+    @GetMapping("/bank-rules/{ruleCode}")
+    @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<RuleDetailDto> getAllTenantRules(@PathVariable String ruleCode){
+        return ResponseEntity.ok(tenantRuleService.getRuleDetails(ruleCode));
+    }
+
+
+
 }
