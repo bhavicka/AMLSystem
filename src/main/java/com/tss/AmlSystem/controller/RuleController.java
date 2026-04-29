@@ -1,11 +1,14 @@
 package com.tss.AmlSystem.controller;
 
 import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.request.RuleParameterUpdateDto;
 import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
+import com.tss.AmlSystem.dto.response.RuleParameterUpdatedDto;
 import com.tss.AmlSystem.service.RuleService;
 import com.tss.AmlSystem.service.TenantRuleService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,6 +52,9 @@ public class RuleController {
         return ResponseEntity.ok(tenantRuleService.getRuleDetails(ruleCode));
     }
 
-
-
+    @PutMapping("/bank-rules/{ruleCode}/parameters")
+    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    public ResponseEntity<RuleParameterUpdatedDto> updateRuleParameters(@PathVariable@NotBlank String ruleCode, @RequestBody@Valid RuleParameterUpdateDto ruleParameterUpdateDto){
+        return ResponseEntity.ok(tenantRuleService.updateRuleParameters(ruleCode, ruleParameterUpdateDto));
+    }
 }
