@@ -14,5 +14,6 @@ public interface TenantUserMapper {
     TenantUser toTenantUser(ComplianceOfficerRegisterDto complianceOfficerRegisterDto);
 
     TenantUserProfileDto toTenantUserProfileDto(TenantUser tenantUser);
+
     TenantUserInlineDto toTenantUserInlineDto(TenantUser tenantUser);
 }

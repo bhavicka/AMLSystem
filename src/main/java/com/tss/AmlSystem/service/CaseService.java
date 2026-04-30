@@ -76,7 +76,7 @@ public class CaseService {
         String currentUserEmail=  authentication.getName();
 
         boolean isAdmin=authentication.getAuthorities().stream()
-                .anyMatch(a->a.getAuthority().equals("ROLE_BANK_ADMIN"));
+                .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         List<Case> cases;
         if(isAdmin){
@@ -88,6 +88,7 @@ public class CaseService {
         return caseMapper.toResponseDtoList(cases);
     }
 
+    @Transactional(readOnly = true)
     public CaseDetailDto getCaseDetail(String caseReferenceNumber){
         Case c=caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
                 .orElseThrow(()->new RuntimeException("Case not found with reference number: "+caseReferenceNumber));

@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ public class AlertService {
     private final AlertMapper alertMapper;
     private final TenantUserRepository tenantUserRepository;
 
+    @Transactional(readOnly = true)
     public AlertDetailDto getAlertDetail(String alertNumber) {
         Alert alert = alertRepository.findAlertByAlertNumber(alertNumber).orElseThrow(
                 ()->new RuntimeException("Alert not found with alert number: "+alertNumber)
@@ -57,6 +59,7 @@ public class AlertService {
         return alertMapper.toAlertDetailDto(alert, totalAmount, transactions);
     }
 
+    @Transactional(readOnly = true)
     public AlertDashboardDto getAlertDashboard(){
         AlertDashboardDto alertDashboardDto=new AlertDashboardDto();
 

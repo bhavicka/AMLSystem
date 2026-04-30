@@ -12,6 +12,7 @@ import java.util.List;
 public interface CaseMapper {
 
     @Mapping(target = "assignedTo", source = "assignedTo.email")
+    @Mapping(target = "caseStatus",source = "status")
     CaseDashboardDto toResponseDto(Case caseEntity);
 
     List<CaseDashboardDto> toResponseDtoList(List<Case> caseEntities);
