@@ -31,6 +31,12 @@ public class RuleController {
             return ResponseEntity.badRequest().body("One or more rule codes are invalid");
     }
 
+    @GetMapping("/tenants/{bankName}/rules")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<RuleDashboardDto> getTenantRules(@PathVariable String bankName, @RequestParam String isActive){
+        return ResponseEntity.ok(tenantRuleService.getTenantRulesByBankName(bankName, Boolean.valueOf(isActive)));
+    }
+
     @GetMapping("/rules")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<RuleDashboardDto> getAllRules(){

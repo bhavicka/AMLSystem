@@ -149,4 +149,30 @@ public class TenantRuleService {
 
         return new RuleParameterUpdatedDto(ruleCode, updatedParameters);
     }
+
+    public RuleDashboardDto getTenantRulesByBankName(String bankName, Boolean isActive){
+        bankName = bankName.replace("-", " ").toUpperCase(Locale.ROOT);
+        String finalBankName = bankName;
+        Tenant tenant = tenantRepository.findByBankName(bankName)
+                .orElseThrow(() -> new RuntimeException("Tenant not found with bank name: " + finalBankName));
+        try {
+            TenantContext.setCurrentTenant(tenant.getSchemaName());
+            List<TenantRule> ruleList;
+            if(isActive)
+                ruleList = tenantRuleRepository.findByIsActiveTrue();
+            else
+                ruleList = tenantRuleRepository.findByIsActiveFalse();
+            List<RuleInlineDto> ruleInlineDtoList = ruleList.stream()
+                    .map(
+                            r -> new RuleInlineDto(
+                                    r.getRuleName(),
+                                    r.getSeverityRate(),
+                                    r.getRuleCode())
+                    )
+                    .toList();
+            return new RuleDashboardDto(ruleInlineDtoList);
+        } finally {
+            TenantContext.clear();
+        }
+    }
 }
