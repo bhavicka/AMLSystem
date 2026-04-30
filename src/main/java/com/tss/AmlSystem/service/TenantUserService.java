@@ -4,6 +4,7 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.response.TenantUserDashboardDto;
 import com.tss.AmlSystem.dto.response.TenantUserInlineDto;
 import com.tss.AmlSystem.dto.response.TenantUserProfileDto;
+import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
 import com.tss.AmlSystem.entity.master.Tenant;
 import com.tss.AmlSystem.entity.master.UserCredential;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
@@ -34,8 +35,8 @@ public class TenantUserService {
         return tenantUserMapper.toTenantUserProfileDto(tenantUser);
     }
 
-    public TenantUserDashboardDto getAllUsers(){
-        List<TenantUser> tenantUserList = tenantUserRepository.findAll();
+    public TenantUserDashboardDto getAllComplianceOfficers(){
+        List<TenantUser> tenantUserList = tenantUserRepository.findByRole(TenantUserRole.COMPLIANCE_OFFICER);
         return new TenantUserDashboardDto(
                 tenantUserList.stream()
                         .map(tenantUserMapper::toTenantUserInlineDto)
