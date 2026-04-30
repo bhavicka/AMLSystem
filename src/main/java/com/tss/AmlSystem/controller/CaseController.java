@@ -40,7 +40,7 @@ public class CaseController {
         return new ResponseEntity<>(caseService.getCaseDetail(caseReferenceNumber), HttpStatus.OK);
     }
 
-    @PutMapping("/cases/{caseReferenceNumber}")
+    @PutMapping("/cases")
     @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
     public ResponseEntity changeCaseStatus(
             @RequestBody(required = false) CaseEscalateDto caseEscalateDto
@@ -48,18 +48,7 @@ public class CaseController {
         if(caseEscalateDto.getAction().equalsIgnoreCase("dismiss")){
             return ResponseEntity.ok(caseService.dismissCase(caseEscalateDto));
         } else if(caseEscalateDto.getAction().equalsIgnoreCase("escalate")){
-            byte[] pdfBytes = caseService.escalateCase(caseEscalateDto);
-
-            // Set headers to trigger a file download in the browser
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=STR_Report.pdf");
-
-            return ResponseEntity
-                    .ok()
-                    .headers(headers)
-                    .contentLength(pdfBytes.length)
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(pdfBytes);
+            return ResponseEntity.ok(caseService.escalateCase(caseEscalateDto));
         } else {
             return ResponseEntity.badRequest().body(null);
         }

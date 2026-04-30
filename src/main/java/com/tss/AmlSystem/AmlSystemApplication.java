@@ -24,6 +24,10 @@ public class AmlSystemApplication {
 		System.setProperty("EMAIL", dotenv.get("EMAIL"));
 		System.setProperty("EMAIL_PASSWORD", dotenv.get("EMAIL_PASSWORD"));
 
+		System.setProperty("CLOUDINARY_CLOUD_NAME", dotenv.get("CLOUDINARY_CLOUD_NAME"));
+		System.setProperty("CLOUDINARY_API_KEY", dotenv.get("CLOUDINARY_API_KEY"));
+		System.setProperty("CLOUDINARY_API_SECRET", dotenv.get("CLOUDINARY_API_SECRET"));
+
 		SpringApplication.run(AmlSystemApplication.class, args);
 	}
 

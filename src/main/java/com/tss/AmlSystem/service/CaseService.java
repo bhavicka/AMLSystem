@@ -1,5 +1,7 @@
 package com.tss.AmlSystem.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.tss.AmlSystem.dto.pdf.StrAlertDto;
 import com.tss.AmlSystem.dto.pdf.StrCustomerDto;
 import com.tss.AmlSystem.dto.pdf.StrReportDto;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.tss.AmlSystem.utils.UniqueNumberGenerator.generateIdentifierNumber;
 
@@ -39,9 +42,12 @@ public class CaseService {
     private final CustomerRepository customerRepository;
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final StrFilingRepository strFilingRepository;
 
     private final CaseMapper caseMapper;
     private final AlertMapper alertMapper;
+
+    private final Cloudinary cloudinary;
 
     @Transactional
     public void createCase(List<String> alertNumbers,String officerEmail){
@@ -134,7 +140,7 @@ public class CaseService {
     }
 
     @Transactional
-    public byte[] escalateCase(CaseEscalateDto caseEscalateDto){
+    public String escalateCase(CaseEscalateDto caseEscalateDto){
         String caseReferenceNumber = caseEscalateDto.getCaseReferenceNumber();
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
@@ -157,6 +163,7 @@ public class CaseService {
         strFilling.setSupportingNotes(caseEscalateDto.getNotes());
         String strReferenceNumber = generateIdentifierNumber("STR");
         strFilling.setReferenceNumber(strReferenceNumber);
+        strFilingRepository.save(strFilling);
 
         //report details
         StrReportDto strReportDto = new StrReportDto(
@@ -210,7 +217,27 @@ public class CaseService {
             );
             strTransactionDtoList.add(strTransactionDto);
         }
-        return pdfGenerationService.generateStrReportPdf(strReportDto, strCustomerDto, strAlertDtoList, strTransactionDtoList);
+        // 1. Generate the PDF as a byte array
+        byte[] pdfBytes = pdfGenerationService.generateStrReportPdf(strReportDto, strCustomerDto, strAlertDtoList, strTransactionDtoList);
+
+        // 2. Upload to Cloudinary
+        try {
+            Map<String, Object> uploadOptions = ObjectUtils.asMap("resource_type", "auto");
+            Map uploadResult = cloudinary.uploader().upload(pdfBytes, uploadOptions);
+
+            // 3. Get the web link
+            String pdfUrl = (String) uploadResult.get("secure_url");
+
+            // 4. Save the link to your DB (assuming your StrFilling entity has a setPdfLink method)
+            strFilling.setPdfStoragePath(pdfUrl); // Make sure you have a field in StrFilling to store this!
+            strFilingRepository.save(strFilling);
+
+            // 5. Return the byte[] to keep your method signature happy (or change your method to return a String URL instead)
+            return pdfUrl;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error uploading PDF to Cloudinary", e);
+        }
     }
 
 }
