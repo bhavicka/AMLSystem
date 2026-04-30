@@ -29,7 +29,8 @@ public class RuleService {
                 .map(
                         r -> new RuleInlineDto(
                                 r.getRuleName(),
-                                r.getSeverityRate())
+                                r.getSeverityRate(),
+                                r.getRuleCode())
                 )
                 .toList();
         return new RuleDashboardDto(ruleInlineDtoList);

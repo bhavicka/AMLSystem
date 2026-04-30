@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Suspicious Transaction Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm;
+            background-color: #ffffff;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                color: #777;
+            }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #0a2342;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 22pt;
+            margin: 0;
+            color: #0a2342;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 11pt;
+            font-weight: bold;
+            background-color: #f4f6f8;
+            padding: 6px 10px;
+            border-left: 4px solid #0a2342;
+            margin-bottom: 10px;
+            color: #0a2342;
+            text-transform: uppercase;
+        }
+        table.info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.info-table td {
+            padding: 6px 8px;
+            vertical-align: top;
+            border: 1px solid #e2e8f0;
+        }
+        td.label {
+            font-weight: bold;
+            color: #4a5568;
+            width: 25%;
+            background-color: #f8fafc;
+        }
+        td.value {
+            width: 25%;
+            color: #1a202c;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+        table.data-table th {
+            background-color: #edf2f7;
+            color: #2d3748;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 8pt;
+        }
+        table.data-table tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        .notes {
+            padding: 10px;
+            background-color: #fffaf0;
+            border: 1px solid #feebc8;
+            border-radius: 2px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Suspicious Transaction Report</h1>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Report Details</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">STR Reference Number:</td>
+                <td class="value" colspan="3" th:text="${report.strRefNumber}">STR-2026-982341</td>
+            </tr>
+            <tr>
+                <td class="label">Case Reference Number:</td>
+                <td class="value" colspan="3" th:text="${report.caseRefNumber}">CAS-FIN-77120</td>
+            </tr>
+            <tr>
+                <td class="label">Filed By:</td>
+                <td class="value" colspan="3">
+                    <span th:text="${report.filedByFullName}">John Doe</span> 
+                    (<span th:text="${report.filedByEmpCode}">EMP-4091</span>)
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Supporting Notes:</td>
+                <td class="value notes" colspan="3" th:text="${report.supportingNotes}">
+                    Unusual structuring of deposits observed across multiple geographical locations over a 7-day period. Further investigation warranted.
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Customer Information</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">Customer Number:</td>
+                <td class="value" th:text="${customer.customerNumber}">CUST-8819203</td>
+                <td class="label">Full Name:</td>
+                <td class="value" th:text="${customer.fullName}">Jane Smith</td>
+            </tr>
+            <tr>
+                <td class="label">Aadhaar Number:</td>
+                <td class="value" th:text="${customer.aadhaarNumber}">[Aadhaar Redacted]</td>
+                <td class="label">PAN:</td>
+                <td class="value" th:text="${customer.pan}">ABCDE1234F</td>
+            </tr>
+            <tr>
+                <td class="label">Occupation:</td>
+                <td class="value" th:text="${customer.occupation}">Freelance Consultant</td>
+                <td class="label">Monthly Income:</td>
+                <td class="value" th:text="${customer.monthlyIncome}">₹1,20,000</td>
+            </tr>
+            <tr>
+                <td class="label">Profession Multiplier:</td>
+                <td class="value" th:text="${customer.professionMultiplier}">1.5x</td>
+                <td class="label">Net Worth:</td>
+                <td class="value" th:text="${customer.netWorth}">₹85,00,000</td>
+            </tr>
+            <tr>
+                <td class="label">Risk Rate:</td>
+                <td class="value" colspan="3" th:text="${customer.riskRate}">High</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Triggered Alerts</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rule Code</th>
+                    <th>Alert Number</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="alert : ${alerts}">
+                    <td th:text="${alert.ruleCode}">AML_STRUCT_01</td>
+                    <td th:text="${alert.alertNumber}">ALT-999120</td>
+                    <td th:text="${#dates.format(alert.date, 'yyyy-MM-dd')}">2026-04-28</td>
+                </tr>
+                <!-- Additional static rows for preview purposes (ignored by Thymeleaf engine during runtime) -->
+                <tr th:if="${alerts == null}">
+                    <td>AML_VELOCITY_04</td>
+                    <td>ALT-999121</td>
+                    <td>2026-04-29</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section" style="page-break-inside: auto;">
+        <div class="section-title">List of Transactions</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Ref Number</th>
+                    <th>Acc Number</th>
+                    <th>Receiver Acc Number</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Mode</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="txn : ${transactions}">
+                    <td th:text="${#dates.format(txn.date, 'yyyy-MM-dd')}">2026-04-25</td>
+                    <td th:text="${txn.refNumber}">TXN-1002094</td>
+                    <td th:text="${txn.accNumber}">1234567890</td>
+                    <td th:text="${txn.receiverAccNumber}">0987654321</td>
+                    <td th:text="${txn.amount}">₹49,000.00</td>
+                    <td th:text="${txn.type}">Debit</td>
+                    <td th:text="${txn.mode}">IMPS</td>
+                </tr>
+                <!-- Additional static rows for preview purposes -->
+                <tr th:if="${transactions == null}">
+                    <td>2026-04-26</td>
+                    <td>TXN-1002105</td>
+                    <td>1234567890</td>
+                    <td>1122334455</td>
+                    <td>₹49,500.00</td>
+                    <td>Debit</td>
+                    <td>RTGS</td>
+                </tr>
+                <tr th:if="${transactions == null}">
+                    <td>2026-04-27</td>
+                    <td>TXN-1002130</td>
+                    <td>1234567890</td>
+                    <td>5544332211</td>
+                    <td>₹48,000.00</td>
+                    <td>Debit</td>
+                    <td>NEFT</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

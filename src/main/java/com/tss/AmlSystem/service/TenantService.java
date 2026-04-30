@@ -38,7 +38,7 @@ public class TenantService {
         bankName = bankName.replace("-", " ").toUpperCase(Locale.ROOT);
         String finalBankName = bankName;
         Tenant tenant = tenantRepository.findByBankName(bankName)
-                .orElseThrow(() -> new RuntimeException("Tenant not found with schema name: " + finalBankName));
+                .orElseThrow(() -> new RuntimeException("Tenant not found with bank name: " + finalBankName));
 
         TenantDetailsDto tenantDetailsDto = new TenantDetailsDto();
         tenantDetailsDto.setBankName(tenant.getBankName());

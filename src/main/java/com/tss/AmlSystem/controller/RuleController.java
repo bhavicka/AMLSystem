@@ -23,6 +23,7 @@ public class RuleController {
     private final RuleService ruleService;
 
     @PostMapping("/rules/assign")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<String> assignRules(@RequestBody@Valid RuleAssignmentDto ruleAssignmentDto){
         if(tenantRuleService.assignRules(ruleAssignmentDto))
             return ResponseEntity.ok("Rules assigned successfully");
@@ -30,16 +31,24 @@ public class RuleController {
             return ResponseEntity.badRequest().body("One or more rule codes are invalid");
     }
 
+    @GetMapping("/tenants/{bankName}/rules")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<RuleDashboardDto> getTenantRules(@PathVariable String bankName, @RequestParam String isActive){
+        return ResponseEntity.ok(tenantRuleService.getTenantRulesByBankName(bankName, Boolean.valueOf(isActive)));
+    }
+
     @GetMapping("/rules")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<RuleDashboardDto> getAllRules(){
         return ResponseEntity.ok(ruleService.getMasterRulesList());
     }
+
     @GetMapping("/rules/{ruleCode}")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<RuleDetailDto> getRuleDetails(@PathVariable String ruleCode){
         return ResponseEntity.ok(ruleService.getRuleDetails(ruleCode));
     }
+
     @GetMapping("/bank-rules")
     @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
     public ResponseEntity<RuleDashboardDto> getAllTenantRules(){
@@ -48,7 +57,7 @@ public class RuleController {
 
     @GetMapping("/bank-rules/{ruleCode}")
     @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<RuleDetailDto> getAllTenantRules(@PathVariable String ruleCode){
+    public ResponseEntity<RuleDetailDto> getTenantRuleDetails(@PathVariable String ruleCode){
         return ResponseEntity.ok(tenantRuleService.getRuleDetails(ruleCode));
     }
 
@@ -57,4 +66,6 @@ public class RuleController {
     public ResponseEntity<RuleParameterUpdatedDto> updateRuleParameters(@PathVariable@NotBlank String ruleCode, @RequestBody@Valid RuleParameterUpdateDto ruleParameterUpdateDto){
         return ResponseEntity.ok(tenantRuleService.updateRuleParameters(ruleCode, ruleParameterUpdateDto));
     }
+
+
 }

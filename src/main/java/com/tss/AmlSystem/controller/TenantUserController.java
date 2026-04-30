@@ -23,10 +23,11 @@ public class TenantUserController {
     ) {
         return ResponseEntity.ok(tenantUserService.getUserProfile(employeeCode));
     }
+
     @GetMapping("/compliance-officers")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<TenantUserDashboardDto> getAllUsers(
+    public ResponseEntity<TenantUserDashboardDto> getAllComplianceOfficers(
     ) {
-        return ResponseEntity.ok(tenantUserService.getAllUsers());
+        return ResponseEntity.ok(tenantUserService.getAllComplianceOfficers());
     }
 }
