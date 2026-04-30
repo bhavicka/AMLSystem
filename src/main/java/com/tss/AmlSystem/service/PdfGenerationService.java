@@ -91,7 +91,6 @@ public class PdfGenerationService {
 
         Context context = new Context();
 
-        // TODO: Replace these with your actual database entities/DTOs
         context.setVariable("report", reportDto);
         context.setVariable("customer", customerDto);
         context.setVariable("alerts", alertDtoList);

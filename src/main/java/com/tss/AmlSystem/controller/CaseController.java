@@ -6,7 +6,9 @@ import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
 import com.tss.AmlSystem.service.CaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,19 +40,26 @@ public class CaseController {
         return new ResponseEntity<>(caseService.getCaseDetail(caseReferenceNumber), HttpStatus.OK);
     }
 
-    //case escalate
-    //dismiss
     @PutMapping("/cases/{caseReferenceNumber}")
     @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
-    public ResponseEntity<CaseDetailDto> changeCaseStatus(
-            @PathVariable String caseReferenceNumber,
-            @RequestParam("action") String action,
+    public ResponseEntity changeCaseStatus(
             @RequestBody(required = false) CaseEscalateDto caseEscalateDto
-            ) {
-        if(action.equalsIgnoreCase("escalate")){
+    ) {
+        if(caseEscalateDto.getAction().equalsIgnoreCase("escalate")){
+            return ResponseEntity.ok(caseService.dismissCase(caseEscalateDto));
+        } else if(caseEscalateDto.getAction().equalsIgnoreCase("dismiss")){
+            byte[] pdfBytes = caseService.escalateCase(caseEscalateDto);
 
-        } else if(action.equalsIgnoreCase("dismiss")){
+            // Set headers to trigger a file download in the browser
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=STR_Report.pdf");
 
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .contentLength(pdfBytes.length)
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfBytes);
         } else {
             return ResponseEntity.badRequest().body(null);
         }

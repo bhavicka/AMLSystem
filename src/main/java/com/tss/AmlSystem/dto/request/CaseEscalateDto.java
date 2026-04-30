@@ -10,5 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CaseEscalateDto {
+    String caseReferenceNumber;
+    String action;
     String notes;
 }

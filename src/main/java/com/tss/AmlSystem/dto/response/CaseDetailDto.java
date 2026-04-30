@@ -14,5 +14,5 @@ public class CaseDetailDto {
     private String caseStatus;
     private String assignedTo;
     private String assignedBy;
-    private List<GeneratedAlertDto> alerts;
+    private List<AlertDetailDto> alerts;
 }

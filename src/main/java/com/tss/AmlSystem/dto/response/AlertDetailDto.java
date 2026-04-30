@@ -17,9 +17,7 @@ public class AlertDetailDto {
     private Severity severity;
     private AlertStatus status;
 
-    private String caseReferenceNumber;
-    private CaseStatus caseStatus;
-    private String assignedTo;
+    private String clientNumber;
 
     private Integer transactionCount;
     private BigDecimal totalAmount;

@@ -1,7 +1,8 @@
 package com.tss.AmlSystem.dto.pdf;
 
-import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class StrCustomerDto {
     public String customerNumber,
             fullName,
@@ -10,5 +11,5 @@ public class StrCustomerDto {
             occupation,
             riskRate;
 
-    public Double monthlyIncome, professionMultiplier, netWorth;
+    public Double monthlyIncome, professionMultiplier;
 }

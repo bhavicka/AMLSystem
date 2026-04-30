@@ -22,19 +22,14 @@ public interface AlertMapper {
 
     List<GeneratedAlertDto> toGeneratedAlertDtos(List<Alert> alerts);
 
-    @Mapping(source = "projection.alertNumber", target = "alertNumber")
-    @Mapping(source = "projection.brokenRuleName", target = "brokenRuleName")
-    @Mapping(source = "projection.severity", target = "severity")
-    @Mapping(source = "projection.status", target = "status")
+    @Mapping(source = "alert.alertNumber", target = "alertNumber")
+    @Mapping(source = "alert.tenantRule.ruleName", target = "brokenRuleName")
+    @Mapping(source = "alert.tenantRule.severityRate", target = "severity")
+    @Mapping(source = "alert.status", target = "status")
+    @Mapping(target = "transactionCount", expression = "java(transactions != null ? transactions.size() : 0)")
 
-    @Mapping(source = "projection.caseReferenceNumber", target = "caseReferenceNumber")
-    @Mapping(source = "projection.caseStatus", target = "caseStatus")
-    @Mapping(source = "projection.assignedTo", target = "assignedTo")
-
-    @Mapping(source = "projection.transactionCount", target = "transactionCount")
     @Mapping(source = "totalAmount", target = "totalAmount")
-
     @Mapping(source = "transactions", target = "transactions")
-    AlertDetailDto toAlertDetailDto(AlertDetailProjection projection, BigDecimal totalAmount,
+    AlertDetailDto toAlertDetailDto(Alert alert, BigDecimal totalAmount,
                                     List<Transaction> transactions);
 }

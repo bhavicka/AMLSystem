@@ -30,28 +30,31 @@ public class AlertService {
     private final TenantUserRepository tenantUserRepository;
 
     public AlertDetailDto getAlertDetail(String alertNumber) {
-        Long alertId = alertRepository.findAlertIdByAlertNumber(alertNumber).orElseThrow(
+        Alert alert = alertRepository.findAlertByAlertNumber(alertNumber).orElseThrow(
                 ()->new RuntimeException("Alert not found with alert number: "+alertNumber)
         );
         Authentication authentication=  SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail= authentication.getName();
 
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_BANK_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("BANK_ADMIN"));
 
-        AlertDetailProjection projection = alertRepository.findAlertDetail(alertId);
-        String assignedUserEmail = projection.getAssignedTo();
+//        AlertDetailProjection projection = alertRepository.findAlertDetail(alertId);
+//        String assignedUserEmail = projection.getAssignedTo();
 
         if (!isAdmin) {
-            if (assignedUserEmail != null && !assignedUserEmail.equalsIgnoreCase(currentUserEmail)) {
+            if (alert.getCaseId() != null && !alert.getCaseId().getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)) {
                 throw new RuntimeException("You are not authorized to view alerts assigned to another officer.");
             }
         }
 
-        List<Transaction> transactions =
-                alertRepository.findTransactionsByAlertId(alertId);
+        List<Transaction> transactions =alert.getTransactions();
 
-        return alertMapper.toAlertDetailDto(projection,projection.getTotalAmount(), transactions);
+        BigDecimal totalAmount = transactions.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return alertMapper.toAlertDetailDto(alert, totalAmount, transactions);
     }
 
     public AlertDashboardDto getAlertDashboard(){
