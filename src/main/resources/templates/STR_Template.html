@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
     <title>Suspicious Transaction Report</title>
     <style>
         @page {
@@ -175,7 +175,7 @@
                 <tr th:each="alert : ${alerts}">
                     <td th:text="${alert.ruleCode}">AML_STRUCT_01</td>
                     <td th:text="${alert.alertNumber}">ALT-999120</td>
-                    <td th:text="${#dates.format(alert.date, 'yyyy-MM-dd')}">2026-04-28</td>
+                    <td th:text="${#temporals.format(alert.date, 'yyyy-MM-dd')}">2026-04-28</td>
                 </tr>
                 <!-- Additional static rows for preview purposes (ignored by Thymeleaf engine during runtime) -->
                 <tr th:if="${alerts == null}">
@@ -203,7 +203,7 @@
             </thead>
             <tbody>
                 <tr th:each="txn : ${transactions}">
-                    <td th:text="${#dates.format(txn.date, 'yyyy-MM-dd')}">2026-04-25</td>
+                    <td th:text="${#temporals.format(txn.date, 'yyyy-MM-dd')}">2026-04-25</td>
                     <td th:text="${txn.refNumber}">TXN-1002094</td>
                     <td th:text="${txn.accNumber}">1234567890</td>
                     <td th:text="${txn.receiverAccNumber}">0987654321</td>

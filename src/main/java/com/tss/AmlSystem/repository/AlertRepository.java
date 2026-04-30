@@ -86,5 +86,6 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
     @Query("SELECT a.id FROM Alert a WHERE a.alertNumber = :alertNumber")
     Optional<Long> findAlertIdByAlertNumber(@Param("alertNumber") String alertNumber);
 
-    Optional<Alert> findAlertByAlertNumber(String alertNumber);
+    @Query("SELECT a FROM Alert a LEFT JOIN FETCH a.transactions WHERE a.alertNumber = :alertNumber")
+    Optional<Alert> findAlertWithTransactions(@Param("alertNumber") String alertNumber);
 }

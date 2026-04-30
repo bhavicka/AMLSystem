@@ -45,9 +45,9 @@ public class CaseController {
     public ResponseEntity changeCaseStatus(
             @RequestBody(required = false) CaseEscalateDto caseEscalateDto
     ) {
-        if(caseEscalateDto.getAction().equalsIgnoreCase("escalate")){
+        if(caseEscalateDto.getAction().equalsIgnoreCase("dismiss")){
             return ResponseEntity.ok(caseService.dismissCase(caseEscalateDto));
-        } else if(caseEscalateDto.getAction().equalsIgnoreCase("dismiss")){
+        } else if(caseEscalateDto.getAction().equalsIgnoreCase("escalate")){
             byte[] pdfBytes = caseService.escalateCase(caseEscalateDto);
 
             // Set headers to trigger a file download in the browser

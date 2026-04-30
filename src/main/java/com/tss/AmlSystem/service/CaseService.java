@@ -76,7 +76,7 @@ public class CaseService {
         String currentUserEmail=  authentication.getName();
 
         boolean isAdmin=authentication.getAuthorities().stream()
-                .anyMatch(a->a.getAuthority().equals("ROLE_BANK_ADMIN"));
+                .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         List<Case> cases;
         if(isAdmin){
@@ -88,6 +88,7 @@ public class CaseService {
         return caseMapper.toResponseDtoList(cases);
     }
 
+    @Transactional(readOnly = true)
     public CaseDetailDto getCaseDetail(String caseReferenceNumber){
         Case c=caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
                 .orElseThrow(()->new RuntimeException("Case not found with reference number: "+caseReferenceNumber));
@@ -118,9 +119,13 @@ public class CaseService {
         return dto;
     }
 
+    @Transactional
     public CaseDetailDto dismissCase(CaseEscalateDto caseEscalateDto){
         Case case_ = caseRepository.findByCaseReferenceNumber(caseEscalateDto.getCaseReferenceNumber())
                 .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
+        if (!case_.getStatus().equals(CaseStatus.OPEN)) {
+            throw new RuntimeException("can only dismiss OPEN case");
+        }
         case_.setStatus(CaseStatus.CLOSED);
         case_.setNotes(caseEscalateDto.getNotes());
         case_.setClosedAt(LocalDateTime.now());
@@ -128,6 +133,7 @@ public class CaseService {
         return caseMapper.toDetailResponseDto(case_);
     }
 
+    @Transactional
     public byte[] escalateCase(CaseEscalateDto caseEscalateDto){
         String caseReferenceNumber = caseEscalateDto.getCaseReferenceNumber();
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -136,6 +142,9 @@ public class CaseService {
                 .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseReferenceNumber));
         if(!case_.getAssignedTo().getEmail().equalsIgnoreCase(email)){
             throw new RuntimeException("You are not authorized to escalate cases assigned to another officer.");
+        }
+        if (!case_.getStatus().equals(CaseStatus.OPEN)) {
+            throw new RuntimeException("can only escalate OPEN case");
         }
         case_.setStatus(CaseStatus.ESCALATED);
         caseRepository.save(case_);
@@ -185,23 +194,21 @@ public class CaseService {
                 Double.parseDouble(customer.getProfessionMultiplier().toString())
         );
 
-        List<Account> accountList = accountRepository.findByClientNumber(customer.getClientNumber());
+        List<Transaction> transactionList = alertRepository.findAllByCaseId(case_.getId()).stream()
+                .flatMap(alert -> alert.getTransactions().stream())
+                .toList();
         List<StrTransactionDto> strTransactionDtoList = new ArrayList<>();
-        for(Account account:accountList){
-            List<Transaction> transactionList = transactionRepository.findByAccountNumber(account.getAccountNumber());
-            transactionList.addAll(transactionRepository.findByCounterPartyAccountNumber(account.getAccountNumber()));
-            for(Transaction transaction: transactionList){
-                StrTransactionDto strTransactionDto = new StrTransactionDto(
-                        transaction.getTransactionDate(),
-                        transaction.getTransactionReferenceNumber(),
-                        transaction.getAccountNumber(),
-                        transaction.getCounterPartyAccountNumber(),
-                        transaction.getTransactionType().toString(),
-                        transaction.getTransactionMode().toString(),
-                        Double.parseDouble(transaction.getAmount().toString())
-                );
-                strTransactionDtoList.add(strTransactionDto);
-            }
+        for(Transaction transaction: transactionList){
+            StrTransactionDto strTransactionDto = new StrTransactionDto(
+                    transaction.getTransactionDate(),
+                    transaction.getTransactionReferenceNumber(),
+                    transaction.getAccountNumber(),
+                    transaction.getCounterPartyAccountNumber(),
+                    transaction.getTransactionType().toString(),
+                    transaction.getTransactionMode().toString(),
+                    Double.parseDouble(transaction.getAmount().toString())
+            );
+            strTransactionDtoList.add(strTransactionDto);
         }
         return pdfGenerationService.generateStrReportPdf(strReportDto, strCustomerDto, strAlertDtoList, strTransactionDtoList);
     }

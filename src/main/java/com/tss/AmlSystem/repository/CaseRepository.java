@@ -16,6 +16,6 @@ public interface CaseRepository extends JpaRepository<Case,Long> {
     """)
     List<Case> findAllByAssignedToEmail(String email);
 
-    @Query("SELECT c FROM Case c WHERE c.caseReferenceNumber = :caseRefNumber")
+    @Query("SELECT c FROM Case c JOIN FETCH c.assignedTo WHERE c.caseReferenceNumber = :caseRefNumber ")
     Optional<Case> findByCaseReferenceNumber(String caseRefNumber);
 }

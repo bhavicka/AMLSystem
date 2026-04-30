@@ -96,7 +96,7 @@ public class PdfGenerationService {
         context.setVariable("alerts", alertDtoList);
         context.setVariable("transactions", transactionDtoList);
 
-        String htmlContent = templateEngine.process("str-report", context);
+        String htmlContent = templateEngine.process("STR_Template", context);
 
         // 3. Convert HTML String to PDF Byte Array
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
