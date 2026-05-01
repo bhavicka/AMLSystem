@@ -18,9 +18,11 @@ public class AlertDetailDto {
     private AlertStatus status;
 
     private String clientNumber;
+//    name
 
     private Integer transactionCount;
     private BigDecimal totalAmount;
 
     private List<AlertTransactionDto> transactions;
+
 }

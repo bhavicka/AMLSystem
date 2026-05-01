@@ -9,4 +9,5 @@ public record JwtResponse (
         String email,
         String bankName,
         List<String> roles
+        //name, first login
 ){}
