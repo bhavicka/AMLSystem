@@ -67,9 +67,16 @@ public class CaseService {
 
         caseRepository.save(newCase);
 
+        String clientNumber = null;
         for(String alertNumber:alertNumbers){
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
                     .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
+            if(clientNumber == null){
+                clientNumber = alert.getClientNumber();
+            }
+            if(clientNumber.equalsIgnoreCase(alert.getClientNumber())){
+                throw new RuntimeException("Can't select alerts belonging to different customers.");
+            }
             alert.setCaseId(newCase);
             alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
             alertRepository.save(alert);
