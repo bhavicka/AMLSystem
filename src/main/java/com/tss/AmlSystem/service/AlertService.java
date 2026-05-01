@@ -45,7 +45,7 @@ public class AlertService {
 //        String assignedUserEmail = projection.getAssignedTo();
 
         if (!isAdmin) {
-            if (alert.getCaseId() != null && !alert.getCaseId().getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)) {
+            if (alert.getCaseId() == null || !alert.getCaseId().getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)) {
                 throw new RuntimeException("You are not authorized to view alerts assigned to another officer.");
             }
         }
