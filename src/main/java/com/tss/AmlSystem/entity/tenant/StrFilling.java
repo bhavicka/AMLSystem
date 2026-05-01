@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Table(name = "str_filling")
+@Table(name = "str_filings")
 @Entity
 @Getter
 @Setter

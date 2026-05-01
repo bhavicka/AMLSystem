@@ -222,10 +222,14 @@ public class CaseService {
 
         // 2. Upload to Cloudinary
         try {
+            // Generate a unique file name
+            String fileName = "str_report_" + case_.getCaseReferenceNumber() + "_" + System.currentTimeMillis() + ".pdf";
+
             Map<String, Object> uploadOptions = ObjectUtils.asMap(
-                    "resource_type", "raw",  // 'raw' is often better for documents like PDFs
-                    "format", "pdf"          // Crucial when uploading byte[]
+                    "resource_type", "raw",
+                    "public_id", fileName // Force Cloudinary to save it with a .pdf extension
             );
+
             Map uploadResult = cloudinary.uploader().upload(pdfBytes, uploadOptions);
 
             // 3. Get the web link
