@@ -60,6 +60,14 @@ public class AuthService {
 
     public String registerBank(BankRegisterDto bankRegisterDto){
         log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
+        userCredentialRepository.findByEmail(bankRegisterDto.bankAdminEmail()).ifPresent(user -> {
+            log.warn("{} {} Email already in use during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.bankAdminEmail());
+            throw new RuntimeException("Email is already in use: " + bankRegisterDto.bankAdminEmail());
+        });
+        tenantRepository.findByContactEmail(bankRegisterDto.contactEmail()).ifPresent(tenant -> {
+            log.warn("{} {} Contact email already associated with another tenant during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.contactEmail());
+            throw new RuntimeException("Contact email is already associated with another tenant: " + bankRegisterDto.contactEmail());
+        });
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         String schemaName = tenant.getBankName().replaceAll("\\s+", "_").toLowerCase() + "_schema";
         tenant.setSchemaName(schemaName);

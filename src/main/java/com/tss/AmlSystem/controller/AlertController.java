@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class AlertController {
     private final AlertService alertService;
@@ -24,7 +24,7 @@ public class AlertController {
     }
 
     @GetMapping("/alerts/{alertNumber}")
-    @PreAuthorize("hasAuthority('BANK_ADMIN')")
+    @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
     public ResponseEntity<AlertDetailDto> getAlertDetail(@PathVariable String alertNumber){
         return ResponseEntity.ok(alertService.getAlertDetail(alertNumber));
     }

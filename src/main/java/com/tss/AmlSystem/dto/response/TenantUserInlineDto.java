@@ -7,4 +7,5 @@ public class TenantUserInlineDto{
     public String employeeCode;
     public String firstName;
     public String lastName;
+    public String email;
 }

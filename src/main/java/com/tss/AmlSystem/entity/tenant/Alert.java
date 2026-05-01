@@ -31,7 +31,6 @@ public class Alert extends BaseEntity {
     private Case caseId;
 
     @NotBlank
-    @Size(max = 8)
     @Column(name = "alert_number", nullable = false, unique = true)
     private String alertNumber;
 

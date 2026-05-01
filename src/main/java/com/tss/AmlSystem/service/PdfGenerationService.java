@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.service;
 
+import com.cloudinary.Cloudinary;
 import com.lowagie.text.Document;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
@@ -13,6 +14,7 @@ import com.tss.AmlSystem.dto.pdf.StrReportDto;
 import com.tss.AmlSystem.dto.pdf.StrTransactionDto;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.lowagie.text.PageSize;
 import org.thymeleaf.TemplateEngine;
@@ -26,6 +28,7 @@ import java.util.List;
 public class PdfGenerationService {
 
     private final TemplateEngine templateEngine;
+    private final Cloudinary cloudinary;
 
     public byte[] generateTransactionReport(List<Transaction> transactions) {
         // 1. Create a stream to hold the PDF data
@@ -91,13 +94,12 @@ public class PdfGenerationService {
 
         Context context = new Context();
 
-        // TODO: Replace these with your actual database entities/DTOs
         context.setVariable("report", reportDto);
         context.setVariable("customer", customerDto);
         context.setVariable("alerts", alertDtoList);
         context.setVariable("transactions", transactionDtoList);
 
-        String htmlContent = templateEngine.process("str-report", context);
+        String htmlContent = templateEngine.process("STR_Template", context);
 
         // 3. Convert HTML String to PDF Byte Array
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {

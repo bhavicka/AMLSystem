@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.mapper;
 
 import com.tss.AmlSystem.dto.request.CustomerBatchProcessDto;
+import com.tss.AmlSystem.dto.response.CustomerInfoDto;
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.enums.tenant.OccupationType;
 import com.tss.AmlSystem.entity.tenant.Customer;
@@ -23,6 +24,8 @@ import java.util.Locale;
         }
 )
 public interface CustomerMapper {
+
+    CustomerInfoDto toCustomerInfoDto(Customer customer);
 
     @Mapping(target = "clientNumber", expression = "java(processDto.getClientNumber().trim())")
     @Mapping(target = "firstName", expression = "java(processDto.getFirstName().trim())")

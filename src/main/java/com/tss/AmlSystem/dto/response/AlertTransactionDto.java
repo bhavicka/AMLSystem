@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Setter
 public class AlertTransactionDto {
     private String accountNumber;
-    private String counterpartyAccountNumber;
+    private String counterPartyAccountNumber;
     private LocalDate transactionDate;
     private TransactionType transactionType;
     private TransactionMode transactionMode;

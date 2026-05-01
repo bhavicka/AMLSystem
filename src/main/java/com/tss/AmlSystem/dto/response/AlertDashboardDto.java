@@ -10,9 +10,4 @@ import java.util.List;
 @Setter
 public class AlertDashboardDto {
     private List<GeneratedAlertDto> alerts;
-    // filters applied (optional but useful)
-    private String ruleName;
-    private String severity;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
 }

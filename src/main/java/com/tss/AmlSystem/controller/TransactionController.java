@@ -32,7 +32,8 @@ public class TransactionController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDispositionFormData("attachment", "transactions_" + customerNumber + ".pdf");
-
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        headers.setContentLength(pdfBytes.length);
         return ResponseEntity
                 .ok()
                 .headers(headers)
