@@ -17,6 +17,8 @@ import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.mapper.CaseMapper;
 import com.tss.AmlSystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -77,21 +79,22 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
-    public List<CaseDashboardDto> getAllCases(){
+    public Slice<CaseDashboardDto> getAllCases(String requestedEmail,CaseStatus caseStatus,String caseReferenceNumber,Pageable pageable){
         Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail=  authentication.getName();
 
         boolean isAdmin=authentication.getAuthorities().stream()
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
-        List<Case> cases;
+        String targetEmailToFilter;
         if(isAdmin){
-            cases=caseRepository.findAll();
+            targetEmailToFilter=requestedEmail;
         }
         else{
-            cases=caseRepository.findAllByAssignedToEmail(currentUserEmail);
+            targetEmailToFilter=currentUserEmail;
         }
-        return caseMapper.toResponseDtoList(cases);
+        return caseRepository.searchCases(targetEmailToFilter,caseReferenceNumber,caseStatus,pageable)
+                .map(caseMapper::toResponseDto);
     }
 
     @Transactional(readOnly = true)
