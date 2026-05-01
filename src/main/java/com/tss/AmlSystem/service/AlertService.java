@@ -32,7 +32,7 @@ public class AlertService {
 
     @Transactional(readOnly = true)
     public AlertDetailDto getAlertDetail(String alertNumber) {
-        Alert alert = alertRepository.findAlertWithTransactions(alertNumber).orElseThrow(
+        Alert alert = alertRepository.findAlertByAlertNumber(alertNumber).orElseThrow(
                 ()->new RuntimeException("Alert not found with alert number: "+alertNumber)
         );
         Authentication authentication=  SecurityContextHolder.getContext().getAuthentication();

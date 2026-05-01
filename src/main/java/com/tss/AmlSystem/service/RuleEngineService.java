@@ -24,6 +24,5 @@ public class RuleEngineService {
             log.debug("{} Delegating execution for Rule: {}", LogTag.RULE.getValue(), rule.getRuleCode());
             executionService.runRule(rule);
         }
-
     }
 }

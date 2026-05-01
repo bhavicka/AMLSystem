@@ -163,7 +163,7 @@ public class CaseService {
         strFilling.setSupportingNotes(caseEscalateDto.getNotes());
         String strReferenceNumber = generateIdentifierNumber("STR");
         strFilling.setReferenceNumber(strReferenceNumber);
-        strFilingRepository.save(strFilling);
+//        strFilingRepository.save(strFilling);
 
         //report details
         StrReportDto strReportDto = new StrReportDto(
@@ -222,12 +222,15 @@ public class CaseService {
 
         // 2. Upload to Cloudinary
         try {
-            Map<String, Object> uploadOptions = ObjectUtils.asMap("resource_type", "auto");
+            Map<String, Object> uploadOptions = ObjectUtils.asMap(
+                    "resource_type", "raw",  // 'raw' is often better for documents like PDFs
+                    "format", "pdf"          // Crucial when uploading byte[]
+            );
             Map uploadResult = cloudinary.uploader().upload(pdfBytes, uploadOptions);
 
             // 3. Get the web link
             String pdfUrl = (String) uploadResult.get("secure_url");
-
+            System.out.println(pdfUrl);
             // 4. Save the link to your DB (assuming your StrFilling entity has a setPdfLink method)
             strFilling.setPdfStoragePath(pdfUrl); // Make sure you have a field in StrFilling to store this!
             strFilingRepository.save(strFilling);
