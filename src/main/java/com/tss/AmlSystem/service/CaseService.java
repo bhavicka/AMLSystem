@@ -185,6 +185,7 @@ public class CaseService {
         caseRepository.save(case_);
 
         TenantUser assignedTo = case_.getAssignedTo();
+        TenantUser assignedBy=case_.getAssignedBy();
 
         StrFilling strFilling = new StrFilling();
         strFilling.setACase(case_);
@@ -271,7 +272,7 @@ public class CaseService {
             // 5. Return the byte[] to keep your method signature happy (or change your method to return a String URL instead)
 
             applicationEventPublisher.publishEvent(new CaseEscalatedEvent(
-                    assignedTo.getEmail(), assignedTo.getFirstName()+" "+assignedTo.getLastName(), case_.getCaseReferenceNumber()
+                    assignedBy.getEmail(), assignedBy.getFirstName()+" "+assignedBy.getLastName(), case_.getCaseReferenceNumber()
             ));
             
             return pdfUrl;

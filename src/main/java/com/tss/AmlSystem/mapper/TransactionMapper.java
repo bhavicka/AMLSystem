@@ -39,7 +39,6 @@ public interface TransactionMapper {
         if (dateString == null || dateString.isBlank()) {
             return null;
         }
-        // It's safer to wrap this in a try-catch even with Regex validation
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             return LocalDate.parse(dateString.trim(), formatter);
