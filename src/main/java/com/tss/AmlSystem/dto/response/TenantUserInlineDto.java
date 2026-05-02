@@ -8,4 +8,5 @@ public class TenantUserInlineDto{
     public String firstName;
     public String lastName;
     public String email;
+    public Integer activeWorkload;
 }

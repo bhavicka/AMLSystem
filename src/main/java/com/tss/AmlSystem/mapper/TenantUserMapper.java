@@ -7,6 +7,7 @@ import com.tss.AmlSystem.dto.response.TenantUserProfileDto;
 import com.tss.AmlSystem.entity.master.UserCredential;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface TenantUserMapper {
@@ -15,5 +16,6 @@ public interface TenantUserMapper {
 
     TenantUserProfileDto toTenantUserProfileDto(TenantUser tenantUser);
 
+    @Mapping(target = "activeWorkload",ignore = true)
     TenantUserInlineDto toTenantUserInlineDto(TenantUser tenantUser);
 }

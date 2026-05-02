@@ -16,6 +16,9 @@ import java.util.Optional;
 @Repository
 public interface CaseRepository extends JpaRepository<Case,Long> {
 
+    @Query("SELECT COUNT(c.id) FROM Case c WHERE c.assignedTo.id = :officerId AND c.status = 'OPEN'")
+    Integer findActiveWorkload(@Param("officerId") Long officerId);
+
     @Query("""
         SELECT c FROM Case c JOIN TenantUser u ON c.assignedTo.id = u.id WHERE u.email = :email
     """)
