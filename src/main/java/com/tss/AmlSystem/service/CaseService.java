@@ -2,6 +2,8 @@ package com.tss.AmlSystem.service;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.tss.AmlSystem.dto.event.CaseCreatedEvent;
+import com.tss.AmlSystem.dto.event.CaseEscalatedEvent;
 import com.tss.AmlSystem.dto.pdf.StrAlertDto;
 import com.tss.AmlSystem.dto.pdf.StrCustomerDto;
 import com.tss.AmlSystem.dto.pdf.StrReportDto;
@@ -17,6 +19,9 @@ import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.mapper.CaseMapper;
 import com.tss.AmlSystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,6 +40,7 @@ import static com.tss.AmlSystem.utils.UniqueNumberGenerator.generateIdentifierNu
 public class CaseService {
 
     private final PdfGenerationService pdfGenerationService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final AlertRepository alertRepository;
     private final TenantUserRepository tenantUserRepository;
@@ -74,24 +80,27 @@ public class CaseService {
             alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
             alertRepository.save(alert);
         }
+
+        applicationEventPublisher.publishEvent(new CaseCreatedEvent(officerEmail,officer.getFirstName()+" "+officer.getLastName(), newCase.getCaseReferenceNumber()));
     }
 
     @Transactional(readOnly = true)
-    public List<CaseDashboardDto> getAllCases(){
+    public Slice<CaseDashboardDto> getAllCases(String requestedEmail,CaseStatus caseStatus,String caseReferenceNumber,Pageable pageable){
         Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail=  authentication.getName();
 
         boolean isAdmin=authentication.getAuthorities().stream()
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
-        List<Case> cases;
+        String targetEmailToFilter;
         if(isAdmin){
-            cases=caseRepository.findAll();
+            targetEmailToFilter=requestedEmail;
         }
         else{
-            cases=caseRepository.findAllByAssignedToEmail(currentUserEmail);
+            targetEmailToFilter=currentUserEmail;
         }
-        return caseMapper.toResponseDtoList(cases);
+        return caseRepository.searchCases(targetEmailToFilter,caseReferenceNumber,caseStatus,pageable)
+                .map(caseMapper::toResponseDto);
     }
 
     @Transactional(readOnly = true)
@@ -240,11 +249,18 @@ public class CaseService {
             strFilingRepository.save(strFilling);
 
             // 5. Return the byte[] to keep your method signature happy (or change your method to return a String URL instead)
+
+            applicationEventPublisher.publishEvent(new CaseEscalatedEvent(
+                    assignedTo.getEmail(), assignedTo.getFirstName()+" "+assignedTo.getLastName(), case_.getCaseReferenceNumber()
+            ));
+            
             return pdfUrl;
 
         } catch (Exception e) {
             throw new RuntimeException("Error uploading PDF to Cloudinary", e);
         }
+
+
     }
 
 }

@@ -1,24 +1,23 @@
 package com.tss.AmlSystem.service;
 
-import com.tss.AmlSystem.dto.response.AlertDashboardDto;
+import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.response.AlertDetailDto;
+import com.tss.AmlSystem.dto.response.GeneratedAlertDto;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
-import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.mapper.AlertMapper;
-import com.tss.AmlSystem.models.AlertDetailProjection;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.repository.TenantUserRepository;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,9 +40,6 @@ public class AlertService {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("BANK_ADMIN"));
 
-//        AlertDetailProjection projection = alertRepository.findAlertDetail(alertId);
-//        String assignedUserEmail = projection.getAssignedTo();
-
         if (!isAdmin) {
             if (alert.getCaseId() == null || !alert.getCaseId().getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)) {
                 throw new RuntimeException("You are not authorized to view alerts assigned to another officer.");
@@ -60,12 +56,19 @@ public class AlertService {
     }
 
     @Transactional(readOnly = true)
-    public AlertDashboardDto getAlertDashboard(){
-        AlertDashboardDto alertDashboardDto=new AlertDashboardDto();
+    public Slice<GeneratedAlertDto> getAlertDashboard(AlertStatus alertStatus,String alertNumber,Pageable pageable){
 
-        alertDashboardDto.setAlerts(alertMapper.toGeneratedAlertDtos(alertRepository.findAll()));
+        Authentication authentication=  SecurityContextHolder.getContext().getAuthentication();
 
-        return alertDashboardDto;
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("BANK_ADMIN"));
+
+        if(!isAdmin){
+            throw new RuntimeException("You are not authorized to view the alert dashboard.");
+        }
+
+        return alertRepository.searchAlerts(alertStatus,alertNumber,pageable)
+                .map(alertMapper::toGeneratedAlertDto);
     }
 
     public void saveAlert(String clientNumber, RuleContext ruleContext,List<Transaction> transactions,String hash){

@@ -42,4 +42,52 @@ public class EmailService {
             log.error("{} Failed to send email to {}: {}", LogTag.EMAIL.getValue(), to, e.getMessage());
         }
     }
+
+    @Async
+    public void sendCaseCreationEmail(String to, String officerName, String caseReferenceNumber) {
+        log.info("{} Preparing to send case creation email to: {}", LogTag.EMAIL.getValue(), to);
+        try {
+            Context context = new Context();
+            context.setVariable("name", officerName);
+            context.setVariable("caseReferenceNumber", caseReferenceNumber);
+
+            String html = templateEngine.process("emails/case-created", context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("AML System - New Case Assigned: " + caseReferenceNumber);
+            helper.setText(html, true);
+
+            mailSender.send(message);
+            log.info("{} Case creation email sent successfully to: {}", LogTag.EMAIL.getValue(), to);
+        } catch (MessagingException e) {
+            log.error("{} Failed to send case creation email to {}: {}", LogTag.EMAIL.getValue(), to, e.getMessage());
+        }
+    }
+
+    @Async
+    public void sendCaseEscalationEmail(String to, String bankAdminName, String caseReferenceNumber) {
+        log.info("{} Preparing to send case escalation email to: {}", LogTag.EMAIL.getValue(), to);
+        try {
+            Context context = new Context();
+            context.setVariable("name", bankAdminName);
+            context.setVariable("caseReferenceNumber", caseReferenceNumber);
+
+            String html = templateEngine.process("emails/case-escalated", context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("ACTION REQUIRED: AML Case Escalated - " + caseReferenceNumber);
+            helper.setText(html, true);
+
+            mailSender.send(message);
+            log.info("{} Case escalation email sent successfully to: {}", LogTag.EMAIL.getValue(), to);
+        } catch (MessagingException e) {
+            log.error("{} Failed to send case escalation email to {}: {}", LogTag.EMAIL.getValue(), to, e.getMessage());
+        }
+    }
 }
