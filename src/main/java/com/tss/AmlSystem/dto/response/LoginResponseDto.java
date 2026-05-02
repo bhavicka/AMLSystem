@@ -2,14 +2,13 @@ package com.tss.AmlSystem.dto.response;
 
 import java.util.List;
 
-public record JwtResponse (
+public record LoginResponseDto(
         String jwt,
         String prefix,
         String refreshToken,
         String email,
         String bankName,
         List<String> roles,
-        //name, first login
         String firstName,
         String lastName,
         Boolean isFirstLogin

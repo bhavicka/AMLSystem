@@ -1,15 +1,13 @@
 package com.tss.AmlSystem.controller;
 
-import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.request.*;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
-import com.tss.AmlSystem.dto.response.JwtResponse;
+import com.tss.AmlSystem.dto.response.LoginResponseDto;
 import com.tss.AmlSystem.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import com.tss.AmlSystem.entity.enums.LogTag;
@@ -49,12 +47,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@RequestBody@Valid LoginRequest loginRequest){
+    public ResponseEntity<LoginResponseDto> login(@RequestBody@Valid LoginRequest loginRequest){
         log.info("{} Received login request for user: {}", LogTag.SYSTEM.getValue(), loginRequest.email());
         return ResponseEntity.ok(authService.login(loginRequest));
     }
     @PostMapping("/refreshtoken")
-    public ResponseEntity<JwtResponse> refreshToken(@RequestBody@Valid TokenRefreshRequest request) {
+    public ResponseEntity<LoginResponseDto> refreshToken(@RequestBody@Valid TokenRefreshRequest request) {
         log.info("{} Received refresh token request", LogTag.SYSTEM.getValue());
         return ResponseEntity.ok(authService.refreshToken(request));
     }

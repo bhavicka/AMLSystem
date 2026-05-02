@@ -4,7 +4,7 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.event.UserRegisteredEvent;
 import com.tss.AmlSystem.dto.request.*;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
-import com.tss.AmlSystem.dto.response.JwtResponse;
+import com.tss.AmlSystem.dto.response.LoginResponseDto;
 import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
 import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
 import com.tss.AmlSystem.entity.master.Tenant;
@@ -21,7 +21,6 @@ import com.tss.AmlSystem.security.RefreshTokenService;
 import com.tss.AmlSystem.security.UserDetailsImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -133,7 +132,7 @@ public class AuthService {
         );
     }
 
-    public JwtResponse login(LoginRequest loginRequest) {
+    public LoginResponseDto login(LoginRequest loginRequest) {
         log.info("{} Login attempt for user: {}", LogTag.AUTH.getValue(), loginRequest.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
@@ -164,7 +163,7 @@ public class AuthService {
             TenantContext.setCurrentTenant(schemaName);
             tenantUser = tenantUserRepository.findByEmail(userDetails.getEmail()).orElseThrow();
         }
-        return new JwtResponse(
+        return new LoginResponseDto(
                 jwt,
                 "Bearer",
                 refreshToken,
@@ -191,7 +190,7 @@ public class AuthService {
         }
         return true;
     }
-    public JwtResponse refreshToken(TokenRefreshRequest request) {
+    public LoginResponseDto refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.refreshToken();
         log.info("{} Refresh token process started", LogTag.AUTH.getValue());
 
@@ -208,7 +207,7 @@ public class AuthService {
 
                     log.info("{} Refresh token successful for: {}", LogTag.AUTH.getValue(), user.getEmail());
                     TenantUser tenantUser = tenantUserRepository.findByEmail(user.getEmail()).orElseThrow();
-                    return new JwtResponse(
+                    return new LoginResponseDto(
                             token,
                             "Bearer",
                             user.getRefreshToken(),
