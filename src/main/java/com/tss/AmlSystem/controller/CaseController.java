@@ -4,6 +4,7 @@ import com.tss.AmlSystem.dto.request.CaseEscalateDto;
 import com.tss.AmlSystem.dto.request.CaseRequestDto;
 import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
+import com.tss.AmlSystem.dto.response.CustomSliceDto;
 import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
 import com.tss.AmlSystem.service.CaseService;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +35,13 @@ public class CaseController {
 
     @GetMapping("/cases")
     @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
-    public ResponseEntity<Slice<CaseDashboardDto>> getAllCases(
+    public ResponseEntity<CustomSliceDto<CaseDashboardDto>> getAllCases(
             @RequestParam(required = false) CaseStatus caseStatus,
             @RequestParam(required = false) String assignedToEmail,
             @RequestParam(required = false) String caseReferenceNumber,
             @PageableDefault() Pageable pageable
     ){
-        return new ResponseEntity<>(caseService.getAllCases(assignedToEmail,caseStatus,caseReferenceNumber,pageable), HttpStatus.OK);
+        return ResponseEntity.ok(new CustomSliceDto<>(caseService.getAllCases(assignedToEmail,caseStatus,caseReferenceNumber,pageable)));
     }
 
     @GetMapping("/cases/{caseReferenceNumber}")

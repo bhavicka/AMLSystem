@@ -16,6 +16,7 @@ public interface AlertMapper {
     @Mapping(source = "tenantRule.ruleName", target = "brokenRuleName")
     @Mapping(source = "tenantRule.severityRate", target = "severity")
     @Mapping(source = "createdAt", target = "generatedAt")
+    @Mapping(source = "alert.clientNumber", target = "clientNumber")
     GeneratedAlertDto toGeneratedAlertDto(Alert alert);
 
 

@@ -15,4 +15,5 @@ public class GeneratedAlertDto {
     private String brokenRuleName;
     private Severity severity;
     private LocalDateTime generatedAt;
+    private String clientNumber;
 }

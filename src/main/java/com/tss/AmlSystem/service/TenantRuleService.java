@@ -1,7 +1,7 @@
 package com.tss.AmlSystem.service;
 
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
-import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.request.RulePermissionDto;
 import com.tss.AmlSystem.dto.request.RuleParameterUpdateDto;
 import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -41,28 +42,53 @@ public class TenantRuleService {
     private final RuleVersionParametersRepository ruleVersionParametersRepository;
     private final TenantUserRepository tenantUserRepository;
 
-    public boolean assignRules(RuleAssignmentDto ruleAssignmentDto){
-        log.info("{} Assigning rules for schema: {}", LogTag.TENANT.getValue(), ruleAssignmentDto.schemaName());
-        Tenant tenant = tenantRepository.findBySchemaName(ruleAssignmentDto.schemaName())
+    public boolean assignRules(String ruleAction, RulePermissionDto rulePermissionDto){
+        Boolean revoked = Boolean.TRUE, activated = Boolean.FALSE;
+
+        if(ruleAction.equalsIgnoreCase("assign")){
+            log.info("{} Assigning rules for schema: {}", LogTag.TENANT.getValue(), rulePermissionDto.schemaName());
+            revoked = Boolean.FALSE;
+            activated = Boolean.TRUE;
+        }else {
+            log.info("{} Revoking rules for schema: {}", LogTag.TENANT.getValue(), rulePermissionDto.schemaName());
+        }
+
+        Tenant tenant = tenantRepository.findBySchemaName(rulePermissionDto.schemaName())
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
-        for(String ruleCode : ruleAssignmentDto.ruleCodes()){
-            RuleTemplate ruleTemplate = ruleTemplateRepository.findByRuleCode(ruleCode)
-                    .orElseThrow(() -> new RuntimeException("Rule template not found for code: " + ruleCode));
-            TenantRuleAssignment tenantRuleAssignment = new TenantRuleAssignment();
-            tenantRuleAssignment.setTenant(tenant);
-            tenantRuleAssignment.setRuleTemplate(ruleTemplate);
-            tenantRuleAssignmentRepository.save(tenantRuleAssignment);
+        try {
+            for (String ruleCode : rulePermissionDto.ruleCodes()) {
+                RuleTemplate ruleTemplate = ruleTemplateRepository.findByRuleCode(ruleCode)
+                        .orElseThrow(() -> new RuntimeException("Rule template not found for code: " + ruleCode));
+                TenantRuleAssignment tenantRuleAssignment = tenantRuleAssignmentRepository
+                        .findByTenantIdAndRuleTemplateId(tenant.getId(), ruleTemplate.getId())
+                        .orElseGet(TenantRuleAssignment::new);
+                tenantRuleAssignment.setTenant(tenant);
+                tenantRuleAssignment.setRuleTemplate(ruleTemplate);
+                tenantRuleAssignment.setIsRevoked(revoked);
+
+                if (revoked) {
+                    tenantRuleAssignment.setRevokedAt(LocalDateTime.now());
+                } else {
+                    tenantRuleAssignment.setRevokedAt(null); // Good practice to clear if un-revoked
+                }
+
+                // 4. Save (JPA will now perform an UPDATE if the ID is present)
+                tenantRuleAssignmentRepository.save(tenantRuleAssignment);
+
+            }
+        }finally{
+            TenantContext.clear();
         }
 
         try {
-            TenantContext.setCurrentTenant(ruleAssignmentDto.schemaName());
-            for(String ruleCode : ruleAssignmentDto.ruleCodes()){
+            TenantContext.setCurrentTenant(rulePermissionDto.schemaName());
+            for(String ruleCode : rulePermissionDto.ruleCodes()){
                 TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode)
-                        .orElseThrow(() -> new RuntimeException("Tenant rule not found for code: " + ruleAssignmentDto.ruleCodes().get(0)));
-                tenantRule.setIsActive(true);
+                        .orElseThrow(() -> new RuntimeException("Tenant rule not found for code: " + rulePermissionDto.ruleCodes().get(0)));
+                tenantRule.setIsActive(activated);
                 tenantRuleRepository.save(tenantRule);
-                log.info("{} {} Activated rule {} for schema: {}", LogTag.TENANT.getValue(), LogTag.RULE.getValue(), ruleCode, ruleAssignmentDto.schemaName());
+                log.info("{} {} {} rule {} for schema: {}", LogTag.TENANT.getValue(), LogTag.RULE.getValue(), ruleAction, ruleCode, rulePermissionDto.schemaName());
             }
         } finally {
             TenantContext.clear();
@@ -151,6 +177,7 @@ public class TenantRuleService {
     }
 
     public RuleDashboardDto getTenantRulesByBankName(String bankName, Boolean isActive){
+        log.info("{} Fetching {} rules for bank: {}", LogTag.TENANT.getValue(), isActive ? "active" : "inactive", bankName);
         bankName = bankName.replace("-", " ").toUpperCase(Locale.ROOT);
         String finalBankName = bankName;
         Tenant tenant = tenantRepository.findByBankName(bankName)

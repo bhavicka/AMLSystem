@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -21,11 +18,15 @@ import java.time.LocalDate;
 public class RootController {
     private final RuleEngineService ruleEngineService;
 
-
     @PostMapping("/run-engine")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
     public ResponseEntity<String> runEngine(){
-        ruleEngineService.execute();
+        ruleEngineService.execute(TenantContext.getCurrentTenant());
         return new ResponseEntity<>("Rule engine executed", HttpStatus.OK);
+    }
+
+    @GetMapping("/test")
+    public String test() {
+        return "Controller is active";
     }
 }

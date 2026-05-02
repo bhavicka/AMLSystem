@@ -2,7 +2,6 @@ package com.tss.AmlSystem.dto.response;
 
 import com.tss.AmlSystem.entity.enums.Severity;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
-import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +17,7 @@ public class AlertDetailDto {
     private AlertStatus status;
 
     private String clientNumber;
-//    name
+    private String customerFullName;
 
     private Integer transactionCount;
     private BigDecimal totalAmount;

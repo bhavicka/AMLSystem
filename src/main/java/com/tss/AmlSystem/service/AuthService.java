@@ -4,7 +4,7 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.event.UserRegisteredEvent;
 import com.tss.AmlSystem.dto.request.*;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
-import com.tss.AmlSystem.dto.response.JwtResponse;
+import com.tss.AmlSystem.dto.response.LoginResponseDto;
 import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
 import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
 import com.tss.AmlSystem.entity.master.Tenant;
@@ -21,7 +21,6 @@ import com.tss.AmlSystem.security.RefreshTokenService;
 import com.tss.AmlSystem.security.UserDetailsImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -57,6 +56,7 @@ public class AuthService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(6);
     private final ApplicationEventPublisher eventPublisher;
+    private final TenantUserRepository tenantUserRepository;
 
     public String registerBank(BankRegisterDto bankRegisterDto){
         log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
@@ -132,8 +132,7 @@ public class AuthService {
         );
     }
 
-    @Transactional
-    public JwtResponse login(LoginRequest loginRequest) {
+    public LoginResponseDto login(LoginRequest loginRequest) {
         log.info("{} Login attempt for user: {}", LogTag.AUTH.getValue(), loginRequest.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
@@ -157,17 +156,23 @@ public class AuthService {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+        TenantUser tenantUser = null;
         if(!roles.get(0).equals(GlobalUserRole.SYSTEM_ADMIN.toString())) {
             String schemaName = userDetails.getSchemaName();
+            TenantContext.clear();
             TenantContext.setCurrentTenant(schemaName);
+            tenantUser = tenantUserRepository.findByEmail(userDetails.getEmail()).orElseThrow();
         }
-        return new JwtResponse(
+        return new LoginResponseDto(
                 jwt,
                 "Bearer",
                 refreshToken,
                 userDetails.getEmail(),
                 userDetails.getBankName(),
-                roles
+                roles,
+                (tenantUser==null)? "System ": tenantUser.getFirstName(),
+                (tenantUser==null)? "Admin": tenantUser.getLastName(),
+                (tenantUser==null)? Boolean.FALSE: user.getIsFirstLogin()
         );
     }
     @Transactional
@@ -185,7 +190,7 @@ public class AuthService {
         }
         return true;
     }
-    public JwtResponse refreshToken(TokenRefreshRequest request) {
+    public LoginResponseDto refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.refreshToken();
         log.info("{} Refresh token process started", LogTag.AUTH.getValue());
 
@@ -201,13 +206,17 @@ public class AuthService {
                     );
 
                     log.info("{} Refresh token successful for: {}", LogTag.AUTH.getValue(), user.getEmail());
-                    return new JwtResponse(
+                    TenantUser tenantUser = tenantUserRepository.findByEmail(user.getEmail()).orElseThrow();
+                    return new LoginResponseDto(
                             token,
                             "Bearer",
                             user.getRefreshToken(),
                             user.getEmail(),
                             user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
-                            List.of(user.getRole().name())
+                            List.of(user.getRole().name()),
+                            tenantUser.getFirstName(),
+                            tenantUser.getLastName(),
+                            tenantUser.getSystemUser().getIsFirstLogin()
                     );
                 })
                 .orElseThrow(() -> {

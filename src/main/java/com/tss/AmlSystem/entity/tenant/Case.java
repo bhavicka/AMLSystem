@@ -30,7 +30,7 @@ public class Case extends BaseEntity {
     @Column(nullable = false,name = "status",columnDefinition = "case_status")
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    private CaseStatus status = CaseStatus.OPEN;
+    private CaseStatus status = CaseStatus.UNDER_INVESTIGATION;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")

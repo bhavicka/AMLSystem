@@ -68,14 +68,21 @@ public class CaseService {
         Case newCase=new Case();
         newCase.setAssignedTo(officer);
         newCase.setCaseReferenceNumber(generateIdentifierNumber("CASE"));
-        newCase.setStatus(CaseStatus.OPEN);
+        newCase.setStatus(CaseStatus.UNDER_INVESTIGATION);
         newCase.setAssignedBy(bankAdmin);
 
         caseRepository.save(newCase);
 
+        String clientNumber = null;
         for(String alertNumber:alertNumbers){
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
                     .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
+            if(clientNumber == null){
+                clientNumber = alert.getClientNumber();
+            }
+            if(!clientNumber.equalsIgnoreCase(alert.getClientNumber())){
+                throw new RuntimeException("Can't select alerts belonging to different customers.");
+            }
             alert.setCaseId(newCase);
             alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
             alertRepository.save(alert);
@@ -130,7 +137,6 @@ public class CaseService {
             alertDetailDtos.add(alertDetailDto);
         }
         dto.setAlerts(alertDetailDtos);
-
         return dto;
     }
 
@@ -138,14 +144,28 @@ public class CaseService {
     public CaseDetailDto dismissCase(CaseEscalateDto caseEscalateDto){
         Case case_ = caseRepository.findByCaseReferenceNumber(caseEscalateDto.getCaseReferenceNumber())
                 .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
-        if (!case_.getStatus().equals(CaseStatus.OPEN)) {
+        if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
             throw new RuntimeException("can only dismiss OPEN case");
         }
         case_.setStatus(CaseStatus.CLOSED);
         case_.setNotes(caseEscalateDto.getNotes());
         case_.setClosedAt(LocalDateTime.now());
         caseRepository.save(case_);
-        return caseMapper.toDetailResponseDto(case_);
+
+        List<Alert> alerts=alertRepository.findAllByCaseId(case_.getId());
+
+        CaseDetailDto caseDetailDto = caseMapper.toDetailResponseDto(case_);
+
+        List<AlertDetailDto> alertDetailDtos = new ArrayList<>();
+        for(Alert alert: alerts){
+            BigDecimal totalAmount = alert.getTransactions().stream()
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            AlertDetailDto alertDetailDto = alertMapper.toAlertDetailDto(alert,totalAmount, alert.getTransactions());
+            alertDetailDtos.add(alertDetailDto);
+        }
+        caseDetailDto.setAlerts(alertDetailDtos);
+        return caseDetailDto;
     }
 
     @Transactional
@@ -158,7 +178,7 @@ public class CaseService {
         if(!case_.getAssignedTo().getEmail().equalsIgnoreCase(email)){
             throw new RuntimeException("You are not authorized to escalate cases assigned to another officer.");
         }
-        if (!case_.getStatus().equals(CaseStatus.OPEN)) {
+        if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
             throw new RuntimeException("can only escalate OPEN case");
         }
         case_.setStatus(CaseStatus.ESCALATED);
