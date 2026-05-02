@@ -8,6 +8,9 @@ public record JwtResponse (
         String refreshToken,
         String email,
         String bankName,
-        List<String> roles
+        List<String> roles,
         //name, first login
+        String firstName,
+        String lastName,
+        Boolean isFirstLogin
 ){}

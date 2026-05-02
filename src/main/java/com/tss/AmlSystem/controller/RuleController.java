@@ -33,7 +33,7 @@ public class RuleController {
 
     @GetMapping("/tenants/{bankName}/rules")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
-    public ResponseEntity<RuleDashboardDto> getTenantRules(@PathVariable String bankName, @RequestParam String isActive){
+    public ResponseEntity<RuleDashboardDto> getTenantRules(@PathVariable String bankName, @RequestParam(defaultValue = "true") String isActive){
         return ResponseEntity.ok(tenantRuleService.getTenantRulesByBankName(bankName, Boolean.valueOf(isActive)));
     }
 

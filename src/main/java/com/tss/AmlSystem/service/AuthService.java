@@ -57,6 +57,7 @@ public class AuthService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(6);
     private final ApplicationEventPublisher eventPublisher;
+    private final TenantUserRepository tenantUserRepository;
 
     public String registerBank(BankRegisterDto bankRegisterDto){
         log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
@@ -157,9 +158,11 @@ public class AuthService {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+        TenantUser tenantUser = null;
         if(!roles.get(0).equals(GlobalUserRole.SYSTEM_ADMIN.toString())) {
             String schemaName = userDetails.getSchemaName();
             TenantContext.setCurrentTenant(schemaName);
+            tenantUser = tenantUserRepository.findByEmail(userDetails.getEmail()).orElseThrow();
         }
         return new JwtResponse(
                 jwt,
@@ -167,7 +170,10 @@ public class AuthService {
                 refreshToken,
                 userDetails.getEmail(),
                 userDetails.getBankName(),
-                roles
+                roles,
+                (tenantUser==null)? "System ": tenantUser.getFirstName(),
+                (tenantUser==null)? "Admin": tenantUser.getLastName(),
+                (tenantUser==null)? Boolean.FALSE: user.getIsFirstLogin()
         );
     }
     @Transactional
@@ -201,13 +207,17 @@ public class AuthService {
                     );
 
                     log.info("{} Refresh token successful for: {}", LogTag.AUTH.getValue(), user.getEmail());
+                    TenantUser tenantUser = tenantUserRepository.findByEmail(user.getEmail()).orElseThrow();
                     return new JwtResponse(
                             token,
                             "Bearer",
                             user.getRefreshToken(),
                             user.getEmail(),
                             user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
-                            List.of(user.getRole().name())
+                            List.of(user.getRole().name()),
+                            tenantUser.getFirstName(),
+                            tenantUser.getLastName(),
+                            tenantUser.getSystemUser().getIsFirstLogin()
                     );
                 })
                 .orElseThrow(() -> {

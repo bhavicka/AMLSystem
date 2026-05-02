@@ -42,7 +42,6 @@ public class TenantRuleService {
     private final RuleVersionParametersRepository ruleVersionParametersRepository;
     private final TenantUserRepository tenantUserRepository;
 
-    @Transactional
     public boolean assignRules(String ruleAction, RulePermissionDto rulePermissionDto){
         Boolean revoked = Boolean.TRUE, activated = Boolean.FALSE;
 
@@ -57,17 +56,29 @@ public class TenantRuleService {
         Tenant tenant = tenantRepository.findBySchemaName(rulePermissionDto.schemaName())
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
-        for(String ruleCode : rulePermissionDto.ruleCodes()){
-            RuleTemplate ruleTemplate = ruleTemplateRepository.findByRuleCode(ruleCode)
-                    .orElseThrow(() -> new RuntimeException("Rule template not found for code: " + ruleCode));
-            TenantRuleAssignment tenantRuleAssignment = new TenantRuleAssignment();
-            tenantRuleAssignment.setTenant(tenant);
-            tenantRuleAssignment.setRuleTemplate(ruleTemplate);
-            tenantRuleAssignment.setIsRevoked(revoked);
-            if(revoked){
-                tenantRuleAssignment.setRevokedAt(LocalDateTime.now());
+        try {
+            for (String ruleCode : rulePermissionDto.ruleCodes()) {
+                RuleTemplate ruleTemplate = ruleTemplateRepository.findByRuleCode(ruleCode)
+                        .orElseThrow(() -> new RuntimeException("Rule template not found for code: " + ruleCode));
+                TenantRuleAssignment tenantRuleAssignment = tenantRuleAssignmentRepository
+                        .findByTenantIdAndRuleTemplateId(tenant.getId(), ruleTemplate.getId())
+                        .orElseGet(TenantRuleAssignment::new);
+                tenantRuleAssignment.setTenant(tenant);
+                tenantRuleAssignment.setRuleTemplate(ruleTemplate);
+                tenantRuleAssignment.setIsRevoked(revoked);
+
+                if (revoked) {
+                    tenantRuleAssignment.setRevokedAt(LocalDateTime.now());
+                } else {
+                    tenantRuleAssignment.setRevokedAt(null); // Good practice to clear if un-revoked
+                }
+
+                // 4. Save (JPA will now perform an UPDATE if the ID is present)
+                tenantRuleAssignmentRepository.save(tenantRuleAssignment);
+
             }
-            tenantRuleAssignmentRepository.save(tenantRuleAssignment);
+        }finally{
+            TenantContext.clear();
         }
 
         try {
@@ -166,6 +177,7 @@ public class TenantRuleService {
     }
 
     public RuleDashboardDto getTenantRulesByBankName(String bankName, Boolean isActive){
+        log.info("{} Fetching {} rules for bank: {}", LogTag.TENANT.getValue(), isActive ? "active" : "inactive", bankName);
         bankName = bankName.replace("-", " ").toUpperCase(Locale.ROOT);
         String finalBankName = bankName;
         Tenant tenant = tenantRepository.findByBankName(bankName)
