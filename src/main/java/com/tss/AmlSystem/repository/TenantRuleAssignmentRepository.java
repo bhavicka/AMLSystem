@@ -4,6 +4,10 @@ import com.tss.AmlSystem.entity.master.TenantRuleAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface TenantRuleAssignmentRepository extends JpaRepository<TenantRuleAssignment, Long> {
+
+    Optional<TenantRuleAssignment>  findByTenantIdAndRuleTemplateId(Long tenantId, Long ruleTemplateId);
 }

@@ -3,8 +3,12 @@ package com.tss.AmlSystem;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
+@EnableJpaAuditing
+@EnableAsync
 public class AmlSystemApplication {
 	public static void main(String[] args) {
 		Dotenv dotenv = Dotenv.load();
@@ -19,6 +23,10 @@ public class AmlSystemApplication {
 
 		System.setProperty("EMAIL", dotenv.get("EMAIL"));
 		System.setProperty("EMAIL_PASSWORD", dotenv.get("EMAIL_PASSWORD"));
+
+		System.setProperty("CLOUDINARY_CLOUD_NAME", dotenv.get("CLOUDINARY_CLOUD_NAME"));
+		System.setProperty("CLOUDINARY_API_KEY", dotenv.get("CLOUDINARY_API_KEY"));
+		System.setProperty("CLOUDINARY_API_SECRET", dotenv.get("CLOUDINARY_API_SECRET"));
 
 		SpringApplication.run(AmlSystemApplication.class, args);
 	}

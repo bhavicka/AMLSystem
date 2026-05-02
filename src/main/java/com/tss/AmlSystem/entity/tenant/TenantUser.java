@@ -4,6 +4,10 @@ import com.tss.AmlSystem.entity.BaseEntity;
 import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
 import com.tss.AmlSystem.entity.master.UserCredential;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,18 +29,32 @@ public class TenantUser extends BaseEntity {
     @JoinColumn(name = "system_user_id")
     private UserCredential systemUser;
 
+    @NotBlank
+    @Email
+    @Size(max = 255)
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotBlank
+    @Size(max = 255)
     @Column(nullable = false, name = "first_name")
     private String firstName;
 
+    @Size(max = 255)
     @Column(name = "middle_name")
     private String middleName;
 
+    @NotBlank
+    @Size(max = 255)
     @Column(nullable = false, name = "last_name")
     private String lastName;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(nullable = false, unique = true, name = "employee_code")
     private String employeeCode;
 
+    @NotNull
     @Column(nullable = false, name = "role",columnDefinition = "user_role")
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)

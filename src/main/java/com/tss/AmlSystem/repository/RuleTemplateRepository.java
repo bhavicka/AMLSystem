@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface RuleTemplateRepository extends JpaRepository<RuleTemplate, Long> {
     Optional<RuleTemplate> findByRuleCode(String ruleCode);
+    Optional<RuleTemplate> findByRuleName(String ruleName);
 }

@@ -19,9 +19,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import com.tss.AmlSystem.entity.enums.LogTag;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class TenantSchemaService {
     private final DataSource dataSource;
     private final TenantUserMapper tenantUserMapper;
@@ -29,6 +32,7 @@ public class TenantSchemaService {
     private final TenantUserRepository tenantUserRepository;
 
     public void createSchema(String name) {
+        log.info("{} Initiating Flyway migration to create schema: {}", LogTag.TENANT.getValue(), name);
         Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(name)
@@ -36,18 +40,23 @@ public class TenantSchemaService {
                 .locations("classpath:db/migration/tenant")
                 .load()
                 .migrate();
-        System.out.println("🚀 Startup Complete! Using schema: " + name);
+        log.info("{} {} Startup Complete! Successfully migrated schema: {}", LogTag.SYSTEM.getValue(), LogTag.TENANT.getValue(), name);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void populateTenantSchema(BankRegisterDto bankRegisterDto, UserCredential userCredential, String schemaName){
+    public void populateTenantSchema(BankRegisterDto bankRegisterDto, UserCredential userCredential){
+        log.info("{} Populating initial setup for tenant schema", LogTag.TENANT.getValue());
         TenantUser user = tenantUserMapper.toTenantUser(bankRegisterDto);
         user.setSystemUser(userCredential);
         user.setRole(TenantUserRole.BANK_ADMIN);
+        user.setEmail(bankRegisterDto.bankAdminEmail());
         String currentUserEmail = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserCredential currentUser = userCredentialRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("Current user not found in database"));
-        System.out.println(TenantContext.getCurrentTenant());
+                .orElseThrow(() -> {
+                    log.error("{} {} Current user not found while populating schema", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue());
+                    return new RuntimeException("Current user not found in database");
+                });
+        log.debug("{} Verified context is within schema: {}", LogTag.TENANT.getValue(), TenantContext.getCurrentTenant());
         user.setCreatedBy(currentUser);
         tenantUserRepository.save(user);
     }

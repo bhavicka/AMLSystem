@@ -3,6 +3,7 @@ package com.tss.AmlSystem.dto.request;
 import jakarta.validation.constraints.NotBlank;
 
 public record TokenRefreshRequest(
-        @NotBlank String refreshToken
+        @NotBlank(message = "Refresh token is required")
+        String refreshToken
 ) {}
 

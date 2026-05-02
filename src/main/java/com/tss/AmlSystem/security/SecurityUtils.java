@@ -10,16 +10,13 @@ import java.util.Optional;
 public class SecurityUtils {
     public static Optional<UserDetailsImpl> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.empty();
         }
-
         // Check if the principal is actually our class and not a String
         if (authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
             return Optional.of(userDetails);
         }
-
         return Optional.empty();
     }
 }

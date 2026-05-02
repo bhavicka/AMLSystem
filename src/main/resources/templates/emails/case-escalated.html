@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Case Escalated</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; color: #333333;">
+
+<div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; border-top: 5px solid #dc3545; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+
+    <h2 style="color: #dc3545; margin-top: 0;">Case Escalated</h2>
+
+    <p style="font-size: 16px;">Hello <strong th:text="${name}">Bank Admin</strong>,</p>
+
+    <p style="font-size: 16px; line-height: 1.5;">
+        An active case has been escalated to Bank Administration for further review and final determination.
+        Your immediate attention is required to process this escalation.
+    </p>
+
+    <div style="background-color: #fff3f3; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0;">
+        <p style="margin: 0; font-size: 16px; color: #842029;">
+            <strong>Case Reference Number:</strong> <span th:text="${caseReferenceNumber}">CASE-123456</span>
+        </p>
+    </div>
+
+    <p style="font-size: 16px; margin-top: 30px;">
+        Thank you,<br>
+        <strong>AML Compliance System</strong>
+    </p>
+
+    <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+    <p style="font-size: 12px; color: #888888; text-align: center;">
+        This is an automated message. Please do not reply to this email.
+    </p>
+</div>
+
+</body>
+</html>

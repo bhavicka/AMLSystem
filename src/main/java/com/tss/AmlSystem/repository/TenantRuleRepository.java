@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface TenantRuleRepository extends JpaRepository<TenantRule,Long> {
     List<TenantRule> findByIsActiveTrue();
+    List<TenantRule> findByIsActiveFalse();
 
     Optional<TenantRule> findByRuleCode(String ruleCode);
+    Optional<TenantRule> findByRuleName(String ruleName);
 }
