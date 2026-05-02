@@ -133,7 +133,6 @@ public class AuthService {
         );
     }
 
-    @Transactional
     public JwtResponse login(LoginRequest loginRequest) {
         log.info("{} Login attempt for user: {}", LogTag.AUTH.getValue(), loginRequest.email());
         Authentication authentication = authenticationManager.authenticate(
@@ -161,6 +160,7 @@ public class AuthService {
         TenantUser tenantUser = null;
         if(!roles.get(0).equals(GlobalUserRole.SYSTEM_ADMIN.toString())) {
             String schemaName = userDetails.getSchemaName();
+            TenantContext.clear();
             TenantContext.setCurrentTenant(schemaName);
             tenantUser = tenantUserRepository.findByEmail(userDetails.getEmail()).orElseThrow();
         }

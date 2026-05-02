@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refreshtoken").permitAll()
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refreshtoken", "/api/v1/test").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

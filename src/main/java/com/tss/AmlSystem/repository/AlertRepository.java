@@ -20,6 +20,7 @@ public interface AlertRepository extends JpaRepository<Alert,Long> {
     SELECT a FROM Alert a
     WHERE a.status = COALESCE(:alertStatus, a.status)
       AND (a.alertNumber LIKE LOWER(CONCAT(:alertNumber, '%')) OR :alertNumber = '' OR :alertNumber IS NULL)
+    ORDER BY a.clientNumber
 """)
     Slice<Alert> searchAlerts(
             @Param("alertStatus") AlertStatus alertStatus,

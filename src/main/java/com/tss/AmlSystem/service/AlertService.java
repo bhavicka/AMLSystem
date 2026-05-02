@@ -5,10 +5,12 @@ import com.tss.AmlSystem.dto.response.AlertDetailDto;
 import com.tss.AmlSystem.dto.response.GeneratedAlertDto;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
+import com.tss.AmlSystem.entity.tenant.Customer;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
+import com.tss.AmlSystem.repository.CustomerRepository;
 import com.tss.AmlSystem.repository.TenantUserRepository;
 import com.tss.AmlSystem.utils.UniqueNumberGenerator;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class AlertService {
     private final AlertRepository alertRepository;
     private final AlertMapper alertMapper;
     private final TenantUserRepository tenantUserRepository;
+    private final CustomerRepository customerRepository;
 
     @Transactional(readOnly = true)
     public AlertDetailDto getAlertDetail(String alertNumber) {
@@ -52,7 +55,12 @@ public class AlertService {
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return alertMapper.toAlertDetailDto(alert, totalAmount, transactions);
+        AlertDetailDto alertDetailDto = alertMapper.toAlertDetailDto(alert, totalAmount, transactions);
+        Customer customer = customerRepository.findByClientNumber(alert.getClientNumber()).orElseThrow(
+                ()->new RuntimeException("Customer not found with client number: "+alert.getClientNumber())
+        );
+        alertDetailDto.setCustomerFullName(customer.getFirstName()+" "+customer.getLastName());
+        return alertDetailDto;
     }
 
     @Transactional(readOnly = true)
