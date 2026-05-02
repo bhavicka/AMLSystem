@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
-public record RuleAssignmentDto (
+public record RulePermissionDto (
         @NotBlank(message = "Schema name is required")
         @Pattern(regexp = "^[a-z0-9_]+$", message = "Invalid schema name format")
         String schemaName,

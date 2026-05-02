@@ -1,6 +1,6 @@
 package com.tss.AmlSystem.controller;
 
-import com.tss.AmlSystem.dto.request.RuleAssignmentDto;
+import com.tss.AmlSystem.dto.request.RulePermissionDto;
 import com.tss.AmlSystem.dto.request.RuleParameterUpdateDto;
 import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
@@ -22,11 +22,11 @@ public class RuleController {
     private final TenantRuleService tenantRuleService;
     private final RuleService ruleService;
 
-    @PostMapping("/rules/assign")
+    @PutMapping("/rules")
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
-    public ResponseEntity<String> assignRules(@RequestBody@Valid RuleAssignmentDto ruleAssignmentDto){
-        if(tenantRuleService.assignRules(ruleAssignmentDto))
-            return ResponseEntity.ok("Rules assigned successfully");
+    public ResponseEntity<String> permitRules(@RequestParam String ruleAction, @RequestBody@Valid RulePermissionDto rulePermissionDto){
+        if(tenantRuleService.assignRules(ruleAction, rulePermissionDto))
+            return ResponseEntity.ok("Rules "+ ruleAction + "ed" + " successfully");
         else
             return ResponseEntity.badRequest().body("One or more rule codes are invalid");
     }
