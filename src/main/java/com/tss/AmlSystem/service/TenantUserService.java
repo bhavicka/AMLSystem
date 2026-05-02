@@ -9,6 +9,7 @@ import com.tss.AmlSystem.entity.master.Tenant;
 import com.tss.AmlSystem.entity.master.UserCredential;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.mapper.TenantUserMapper;
+import com.tss.AmlSystem.repository.CaseRepository;
 import com.tss.AmlSystem.repository.TenantRepository;
 import com.tss.AmlSystem.repository.TenantUserRepository;
 import com.tss.AmlSystem.repository.UserCredentialRepository;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,6 +30,7 @@ public class TenantUserService {
     private final UserCredentialRepository userCredentialRepository;
     private final TenantRepository tenantRepository;
     private final TenantUserMapper tenantUserMapper;
+    private final CaseRepository caseRepository;
 
     public TenantUserProfileDto getUserProfile(String employeeCode){
         TenantUser tenantUser = tenantUserRepository.findByEmployeeCode(employeeCode)
@@ -37,10 +40,17 @@ public class TenantUserService {
 
     public TenantUserDashboardDto getAllComplianceOfficers(){
         List<TenantUser> tenantUserList = tenantUserRepository.findByRole(TenantUserRole.COMPLIANCE_OFFICER);
+        List<TenantUserInlineDto> result=new ArrayList<>();
+
+        for(TenantUser user:tenantUserList){
+            Integer activeWorkload=caseRepository.findActiveWorkload(user.getId());
+            TenantUserInlineDto t=tenantUserMapper.toTenantUserInlineDto(user);
+            t.setActiveWorkload(activeWorkload);
+            result.add(t);
+        }
+
         return new TenantUserDashboardDto(
-                tenantUserList.stream()
-                        .map(tenantUserMapper::toTenantUserInlineDto)
-                        .toList()
+                result
         );
     }
 }

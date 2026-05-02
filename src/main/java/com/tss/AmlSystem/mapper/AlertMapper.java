@@ -4,7 +4,6 @@ import com.tss.AmlSystem.dto.response.AlertDetailDto;
 import com.tss.AmlSystem.dto.response.GeneratedAlertDto;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Transaction;
-import com.tss.AmlSystem.models.AlertDetailProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
