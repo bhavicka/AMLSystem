@@ -8,7 +8,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface StrFilingMapper {
 
-    @Mapping(target = "caseReferenceNumber", source = "strFilling.referenceNumber")
+    @Mapping(
+            target = "caseReferenceNumber",
+            expression = "java(strFilling.getACase().getCaseReferenceNumber())"
+    )
     @Mapping(target = "filedBy", expression = "java(strFilling.getFiledBy().getFirstName() + ' ' + strFilling.getFiledBy().getLastName())")
     @Mapping(target = "referenceNumber", source = "strFilling.referenceNumber")
     @Mapping(target = "filedAt", source = "strFilling.createdAt")
