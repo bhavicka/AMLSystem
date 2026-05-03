@@ -24,7 +24,7 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final PdfGenerationService pdfGenerationService;
 
-    @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER')")
+    @PreAuthorize("hasAuthority('COMPLIANCE_OFFICER') or hasAuthority('BANK_ADMIN')")
     @GetMapping(value = "/customers/{customerNumber}/transactions/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> downloadTransactionPdf(@PathVariable String customerNumber) {
         List<Transaction> transactionList = transactionService.generateTransactionHistoryPdf(customerNumber);

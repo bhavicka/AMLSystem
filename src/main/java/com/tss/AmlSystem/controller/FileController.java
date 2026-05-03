@@ -57,7 +57,7 @@ public class FileController {
 
     @GetMapping("/{fileNumber}")
     @PreAuthorize("hasAuthority('BANK_ADMIN')")
-    public ResponseEntity<FileDetailDto> getAllFiles(@PathVariable String fileNumber){
+    public ResponseEntity<FileDetailDto> getFileDetails(@PathVariable String fileNumber){
         return ResponseEntity.ok(fileService.getFileDetails(fileNumber));
     }
 

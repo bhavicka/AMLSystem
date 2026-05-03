@@ -14,7 +14,7 @@ public class UserEventListener {
     private final EmailService emailService;
 
     @EventListener
-    @Async // This ensures the email sending doesn't slow down the registration response
+    @Async
     public void handleUserRegistration(UserRegisteredEvent event) {
         emailService.sendRegistrationEmail(
                 event.email(),
