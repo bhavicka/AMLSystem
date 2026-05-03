@@ -7,6 +7,8 @@ import com.tss.AmlSystem.dto.response.RuleDashboardDto;
 import com.tss.AmlSystem.dto.response.RuleDetailDto;
 import com.tss.AmlSystem.dto.response.RuleInlineDto;
 import com.tss.AmlSystem.dto.response.RuleParameterUpdatedDto;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
 import com.tss.AmlSystem.entity.master.RuleTemplate;
 import com.tss.AmlSystem.entity.master.Tenant;
 import com.tss.AmlSystem.entity.master.TenantRuleAssignment;
@@ -54,12 +56,12 @@ public class TenantRuleService {
         }
 
         Tenant tenant = tenantRepository.findBySchemaName(rulePermissionDto.schemaName())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 
         try {
             for (String ruleCode : rulePermissionDto.ruleCodes()) {
                 RuleTemplate ruleTemplate = ruleTemplateRepository.findByRuleCode(ruleCode)
-                        .orElseThrow(() -> new RuntimeException("Rule template not found for code: " + ruleCode));
+                        .orElseThrow(() -> new ResourceNotFoundException("Rule template not found for code: " + ruleCode));
                 TenantRuleAssignment tenantRuleAssignment = tenantRuleAssignmentRepository
                         .findByTenantIdAndRuleTemplateId(tenant.getId(), ruleTemplate.getId())
                         .orElseGet(TenantRuleAssignment::new);
@@ -85,7 +87,7 @@ public class TenantRuleService {
             TenantContext.setCurrentTenant(rulePermissionDto.schemaName());
             for(String ruleCode : rulePermissionDto.ruleCodes()){
                 TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode)
-                        .orElseThrow(() -> new RuntimeException("Tenant rule not found for code: " + rulePermissionDto.ruleCodes().get(0)));
+                        .orElseThrow(() -> new ResourceNotFoundException("Tenant rule not found for code: " + ruleCode));
                 tenantRule.setIsActive(activated);
                 tenantRuleRepository.save(tenantRule);
                 log.info("{} {} {} rule {} for schema: {}", LogTag.TENANT.getValue(), LogTag.RULE.getValue(), ruleAction, ruleCode, rulePermissionDto.schemaName());
@@ -114,7 +116,7 @@ public class TenantRuleService {
         ruleCode = ruleCode.toUpperCase(Locale.ROOT);
         String finalRuleCode = ruleCode;
         TenantRule tenantRule = tenantRuleRepository.findByRuleCode(ruleCode)
-                .orElseThrow(() -> new RuntimeException("Rule not found with code: " + finalRuleCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Rule not found with code: " + finalRuleCode));
         RuleDetailDto ruleDetailDto = new RuleDetailDto();
         ruleDetailDto.setRuleCode(tenantRule.getRuleCode());
         ruleDetailDto.setRuleName(tenantRule.getRuleName());
@@ -150,13 +152,13 @@ public class TenantRuleService {
                 if(oldParameter.getMinValue() != null){
                     min = Long.parseLong(oldParameter.getMinValue());
                     if(newValue<min)
-                        throw new IllegalArgumentException("New value of parameter is less than minimum value allowed.");
+                        throw new BusinessValidationException("New value of parameter is less than minimum value allowed.");
                 }
                 Long max;
                 if(oldParameter.getMinValue() != null){
                     max = Long.parseLong(oldParameter.getMaxValue());
                     if(newValue>max)
-                        throw new IllegalArgumentException("New value of parameter is greater than maximum value allowed.");
+                        throw new BusinessValidationException("New value of parameter is greater than maximum value allowed.");
                 }
                 ruleVersionParameters.setOldParamValue(oldParameter.getParamValue());
                 oldParameter.setParamValue(newValue.toString());
@@ -181,7 +183,7 @@ public class TenantRuleService {
         bankName = bankName.replace("-", " ").toUpperCase(Locale.ROOT);
         String finalBankName = bankName;
         Tenant tenant = tenantRepository.findByBankName(bankName)
-                .orElseThrow(() -> new RuntimeException("Tenant not found with bank name: " + finalBankName));
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with bank name: " + finalBankName));
         try {
             TenantContext.setCurrentTenant(tenant.getSchemaName());
             List<TenantRule> ruleList;

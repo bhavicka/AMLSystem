@@ -28,7 +28,6 @@ import java.util.List;
 public class PdfGenerationService {
 
     private final TemplateEngine templateEngine;
-    private final Cloudinary cloudinary;
 
     public byte[] generateTransactionReport(List<Transaction> transactions) {
         // 1. Create a stream to hold the PDF data

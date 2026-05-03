@@ -4,6 +4,8 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.response.AlertDetailDto;
 import com.tss.AmlSystem.dto.response.GeneratedAlertDto;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
+import com.tss.AmlSystem.exception.UnauthorizedAccessException;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Customer;
 import com.tss.AmlSystem.entity.tenant.Transaction;
@@ -35,7 +37,7 @@ public class AlertService {
     @Transactional(readOnly = true)
     public AlertDetailDto getAlertDetail(String alertNumber) {
         Alert alert = alertRepository.findAlertByAlertNumber(alertNumber).orElseThrow(
-                ()->new RuntimeException("Alert not found with alert number: "+alertNumber)
+                ()->new ResourceNotFoundException("Alert not found with alert number: "+alertNumber)
         );
         Authentication authentication=  SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail= authentication.getName();
@@ -45,7 +47,7 @@ public class AlertService {
 
         if (!isAdmin) {
             if (alert.getCaseId() == null || !alert.getCaseId().getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)) {
-                throw new RuntimeException("You are not authorized to view alerts assigned to another officer.");
+                throw new UnauthorizedAccessException("You are not authorized to view alerts assigned to another officer.");
             }
         }
 
@@ -57,7 +59,7 @@ public class AlertService {
 
         AlertDetailDto alertDetailDto = alertMapper.toAlertDetailDto(alert, totalAmount, transactions);
         Customer customer = customerRepository.findByClientNumber(alert.getClientNumber()).orElseThrow(
-                ()->new RuntimeException("Customer not found with client number: "+alert.getClientNumber())
+                ()->new ResourceNotFoundException("Customer not found with client number: "+alert.getClientNumber())
         );
         alertDetailDto.setCustomerFullName(customer.getFirstName()+" "+customer.getLastName());
         return alertDetailDto;
@@ -72,7 +74,7 @@ public class AlertService {
                 .anyMatch(a -> a.getAuthority().equals("BANK_ADMIN"));
 
         if(!isAdmin){
-            throw new RuntimeException("You are not authorized to view the alert dashboard.");
+            throw new UnauthorizedAccessException("You are not authorized to view the alert dashboard.");
         }
 
         return alertRepository.searchAlerts(alertStatus,alertNumber,pageable)

@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.factory;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.exception.BusinessValidationException;
 import com.tss.AmlSystem.strategy.batch.header.FileHeaderValidator;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class FileHeaderValidatorFactory {
     public FileHeaderValidator getValidator(FileType fileType) {
         FileHeaderValidator validator = validatorMap.get(fileType);
         if (validator == null) {
-            throw new IllegalArgumentException("No validator found for " + fileType);
+            throw new BusinessValidationException("No validator found for " + fileType);
         }
         return validator;
     }

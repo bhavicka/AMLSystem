@@ -4,6 +4,8 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.response.FileUploadProcessDto;
 import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.DuplicateResourceException;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.FileRepository;
@@ -52,7 +54,7 @@ public class FileUploadService {
         String fileHash = calculateFileHash(multipartFile);
         fileRepository.findByFileHash(fileHash).ifPresent(existingFile -> {
             log.error("{} {} Duplicate file upload detected. FileHash: {}, Tenant: {}", LogTag.BATCH.getValue(), LogTag.SECURITY.getValue(), fileHash, tenant);
-            throw new RuntimeException("Duplicate file upload detected: " + existingFile.getFileName());
+            throw new DuplicateResourceException("Duplicate file upload detected: " + existingFile.getFileName());
         });
 
         Path storedFilePath = storeFile(multipartFile, fileType);

@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.strategy.batch.header;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.exception.BusinessValidationException;
 import com.tss.AmlSystem.utils.FileHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +26,7 @@ public class TransactionHeaderValidator implements FileHeaderValidator {
             String headerLine = reader.readLine();
 
             if (headerLine == null) {
-                throw new IllegalArgumentException("Empty file");
+                throw new BusinessValidationException("Empty file");
             }
 
             List<String> actualHeaders = Arrays.stream(headerLine.split(","))
@@ -35,7 +36,7 @@ public class TransactionHeaderValidator implements FileHeaderValidator {
             List<String> expectedHeaders = FileHeaders.TRANSACTION_HEADER;
 
             if (!actualHeaders.equals(expectedHeaders)) {
-                throw new IllegalArgumentException("Invalid TRANSACTIONS file headers");
+                throw new BusinessValidationException("Invalid TRANSACTIONS file headers");
             }
         }
     }

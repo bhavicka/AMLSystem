@@ -3,6 +3,7 @@ package com.tss.AmlSystem.strategy.rule;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.tenant.Alert;
 import com.tss.AmlSystem.entity.tenant.Transaction;
+import com.tss.AmlSystem.exception.BusinessValidationException;
 import com.tss.AmlSystem.models.RuleContext;
 import com.tss.AmlSystem.repository.AlertRepository;
 import com.tss.AmlSystem.repository.RuleQueryRepository;
@@ -46,7 +47,7 @@ public class StructuringRuleEvaluator implements RuleEvaluator {
         int lookBackDays        = Integer.parseInt(params.get("look_back_days"));
 
         if (timeWindowInDays > lookBackDays) {
-            throw new IllegalArgumentException("Time window cannot be greater than look back days");
+            throw new BusinessValidationException("Time window cannot be greater than look back days");
         }
 
         LocalDateTime lookBackStart = LocalDateTime.now().minusDays(lookBackDays);

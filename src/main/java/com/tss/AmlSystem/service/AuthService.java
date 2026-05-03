@@ -3,6 +3,9 @@ package com.tss.AmlSystem.service;
 import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.event.UserRegisteredEvent;
 import com.tss.AmlSystem.dto.request.*;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.DuplicateResourceException;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
 import com.tss.AmlSystem.dto.response.ComplianceOfficerRegisteredDto;
 import com.tss.AmlSystem.dto.response.LoginResponseDto;
 import com.tss.AmlSystem.entity.enums.master.GlobalUserRole;
@@ -62,11 +65,11 @@ public class AuthService {
         log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
         userCredentialRepository.findByEmail(bankRegisterDto.bankAdminEmail()).ifPresent(user -> {
             log.warn("{} {} Email already in use during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.bankAdminEmail());
-            throw new RuntimeException("Email is already in use: " + bankRegisterDto.bankAdminEmail());
+            throw new DuplicateResourceException("Email is already in use: " + bankRegisterDto.bankAdminEmail());
         });
         tenantRepository.findByContactEmail(bankRegisterDto.contactEmail()).ifPresent(tenant -> {
             log.warn("{} {} Contact email already associated with another tenant during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.contactEmail());
-            throw new RuntimeException("Contact email is already associated with another tenant: " + bankRegisterDto.contactEmail());
+            throw new DuplicateResourceException("Contact email is already associated with another tenant: " + bankRegisterDto.contactEmail());
         });
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         String schemaName = tenant.getBankName().replaceAll("\\s+", "_").toLowerCase() + "_schema";
@@ -106,11 +109,17 @@ public class AuthService {
             throw new RuntimeException("No tenant context found");
         }
         String password = generateSecurePassword();
+
+        userCredentialRepository.findByEmail(complianceOfficerRegisterDto.email()).ifPresent(user -> {
+            log.warn("{} {} Email already in use during compliance officer registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), complianceOfficerRegisterDto.email());
+            throw new DuplicateResourceException("Email is already in use: " + complianceOfficerRegisterDto.email());
+        });
+
         UserCredential userCredential = userCredentialMapper.toUserCredential(complianceOfficerRegisterDto);
         userCredential.setRole(GlobalUserRole.COMPLIANCE_OFFICER);
         userCredential.setPasswordHash(passwordEncoder.encode(password));
         userCredential.setTenant(tenantRepository.findBySchemaName(currentTenant)
-                .orElseThrow(() -> new RuntimeException("Tenant not found for schema: " + currentTenant)));
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found for schema: " + currentTenant)));
         userCredentialRepository.save(userCredential);
 
         TenantUser tenantUser = tenantUserMapper.toTenantUser(complianceOfficerRegisterDto);
@@ -181,7 +190,7 @@ public class AuthService {
         UserCredential userCredential = userCredentialRepository.findByEmail(passwordChangeRequestDto.email())
                 .orElseThrow(() -> {
                     log.warn("{} User not found for password update: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
-                    return new RuntimeException("User not found with email: " + passwordChangeRequestDto.email());
+                    return new ResourceNotFoundException("User not found with email: " + passwordChangeRequestDto.email());
                 });
         if(userCredential.getIsFirstLogin()){
             userCredential.setPasswordHash(passwordEncoder.encode(passwordChangeRequestDto.newPassword()));

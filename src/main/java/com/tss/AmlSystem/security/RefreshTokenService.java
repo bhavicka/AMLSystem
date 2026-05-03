@@ -1,6 +1,8 @@
 package com.tss.AmlSystem.security;
 
 import com.tss.AmlSystem.entity.master.UserCredential;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
+import com.tss.AmlSystem.exception.UnauthorizedAccessException;
 import com.tss.AmlSystem.repository.UserCredentialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +34,7 @@ public class RefreshTokenService {
     public String createRefreshToken(Long userId) {
         log.info("{} Creating refresh token for user ID: {}", LogTag.AUTH.getValue(), userId);
         UserCredential user = userCredentialRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         String token = UUID.randomUUID().toString();
 
@@ -50,7 +52,7 @@ public class RefreshTokenService {
             user.setRefreshToken(null);
             user.setRefreshTokenExpiry(null);
             userCredentialRepository.save(user);
-            throw new RuntimeException("Refresh token was expired. Please make a new login request");
+            throw new UnauthorizedAccessException("Refresh token was expired. Please make a new login request");
         }
         return user;
     }

@@ -3,6 +3,8 @@ package com.tss.AmlSystem.service;
 import com.tss.AmlSystem.dto.response.StrFilingDetailDto;
 import com.tss.AmlSystem.dto.response.StrFilingInlineDto;
 import com.tss.AmlSystem.entity.enums.tenant.TenantUserRole;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
+import com.tss.AmlSystem.exception.UnauthorizedAccessException;
 import com.tss.AmlSystem.entity.tenant.Customer;
 import com.tss.AmlSystem.entity.tenant.StrFilling;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
@@ -39,7 +41,7 @@ public class StrFilingService {
         log.info("Fetching STR filings with pagination: page {}, size {}", pageable.getPageNumber(), pageable.getPageSize());
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(
-                () -> new RuntimeException("Current user not found in database")
+                () -> new ResourceNotFoundException("Current user not found in database")
         );
 
         Slice<StrFilling> strFillingList;
@@ -69,12 +71,12 @@ public class StrFilingService {
                 () -> new RuntimeException("Current user not found in database")
         );
         StrFilling strFiling = strFilingRepository.findByReferenceNumber(referenceNumber).orElseThrow(
-                () -> new RuntimeException("STR filing not found with reference number: "+referenceNumber)
+                () -> new ResourceNotFoundException("STR filing not found with reference number: "+referenceNumber)
         );
         Customer customer = customerRepository.findByClientNumber(
                 alertRepository.findAllByCaseId(strFiling.getACase().getId()).get(0).getClientNumber()
         ).orElseThrow(
-                () -> new RuntimeException("Customer not found for STR filing with reference number: "+referenceNumber)
+                () -> new ResourceNotFoundException("Customer not found for STR filing with reference number: "+referenceNumber)
         );
 
         StrFilingDetailDto strFilingDetailDto = strFilingMapper.toStrFilingDetailDto(strFiling, customer.getClientNumber());
@@ -87,7 +89,7 @@ public class StrFilingService {
                 return strFilingDetailDto;
             }
             else {
-                throw new RuntimeException("You are not authorized to view details of STR filings filed by another officer.");
+                throw new UnauthorizedAccessException("You are not authorized to view details of STR filings filed by another officer.");
             }
         }
     }

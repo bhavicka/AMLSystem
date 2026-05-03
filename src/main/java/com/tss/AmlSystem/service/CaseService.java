@@ -14,6 +14,9 @@ import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
+import com.tss.AmlSystem.exception.UnauthorizedAccessException;
 import com.tss.AmlSystem.entity.tenant.*;
 import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.mapper.CaseMapper;
@@ -58,12 +61,12 @@ public class CaseService {
     @Transactional
     public void createCase(List<String> alertNumbers,String officerEmail){
         TenantUser officer=tenantUserRepository.findByEmail(officerEmail)
-                .orElseThrow(()->new RuntimeException("User not found with email: "+officerEmail));
+                .orElseThrow(()->new ResourceNotFoundException("User not found with email: "+officerEmail));
 
         String currentUserEmail=  SecurityContextHolder.getContext().getAuthentication().getName();
 
         TenantUser bankAdmin=tenantUserRepository.findByEmail(currentUserEmail)
-                .orElseThrow(()->new RuntimeException("User not found with email: "+currentUserEmail));
+                .orElseThrow(()->new ResourceNotFoundException("User not found with email: "+currentUserEmail));
 
         Case newCase=new Case();
         newCase.setAssignedTo(officer);
@@ -76,12 +79,12 @@ public class CaseService {
         String clientNumber = null;
         for(String alertNumber:alertNumbers){
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
-                    .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
+                    .orElseThrow(()->new ResourceNotFoundException("Alert not found with alert number: "+alertNumber));
             if(clientNumber == null){
                 clientNumber = alert.getClientNumber();
             }
             if(!clientNumber.equalsIgnoreCase(alert.getClientNumber())){
-                throw new RuntimeException("Can't select alerts belonging to different customers.");
+                throw new BusinessValidationException("Can't select alerts belonging to different customers.");
             }
             alert.setCaseId(newCase);
             alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
@@ -113,7 +116,7 @@ public class CaseService {
     @Transactional(readOnly = true)
     public CaseDetailDto getCaseDetail(String caseReferenceNumber){
         Case c=caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
-                .orElseThrow(()->new RuntimeException("Case not found with reference number: "+caseReferenceNumber));
+                .orElseThrow(()->new ResourceNotFoundException("Case not found with reference number: "+caseReferenceNumber));
 
         Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail=  authentication.getName();
@@ -124,7 +127,7 @@ public class CaseService {
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         if(!isAdmin && !c.getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)){
-            throw new RuntimeException("You are not authorized to view cases assigned to another officer.");
+            throw new UnauthorizedAccessException("You are not authorized to view cases assigned to another officer.");
         }
 
         CaseDetailDto dto=caseMapper.toDetailResponseDto(c);
@@ -143,9 +146,9 @@ public class CaseService {
     @Transactional
     public CaseDetailDto dismissCase(CaseEscalateDto caseEscalateDto){
         Case case_ = caseRepository.findByCaseReferenceNumber(caseEscalateDto.getCaseReferenceNumber())
-                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
         if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
-            throw new RuntimeException("can only dismiss OPEN case");
+            throw new BusinessValidationException("can only dismiss OPEN case");
         }
         case_.setStatus(CaseStatus.CLOSED);
         case_.setNotes(caseEscalateDto.getNotes());
@@ -172,14 +175,14 @@ public class CaseService {
     public String escalateCase(CaseEscalateDto caseEscalateDto){
         String caseReferenceNumber = caseEscalateDto.getCaseReferenceNumber();
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         Case case_ = caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
-                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseReferenceNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with reference number: " + caseReferenceNumber));
         if(!case_.getAssignedTo().getEmail().equalsIgnoreCase(email)){
-            throw new RuntimeException("You are not authorized to escalate cases assigned to another officer.");
+            throw new UnauthorizedAccessException("You are not authorized to escalate cases assigned to another officer.");
         }
         if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
-            throw new RuntimeException("can only escalate OPEN case");
+            throw new BusinessValidationException("can only escalate OPEN case");
         }
         case_.setStatus(CaseStatus.ESCALATED);
         caseRepository.save(case_);
@@ -216,7 +219,7 @@ public class CaseService {
         }
 
         Customer customer = customerRepository.findByClientNumber(alertList.get(0).getClientNumber())
-                .orElseThrow(() -> new RuntimeException("Customer not found with client number: " + alertList.get(0).getClientNumber()));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with client number: " + alertList.get(0).getClientNumber()));
 
         //customer details
         StrCustomerDto strCustomerDto = new StrCustomerDto(
@@ -282,5 +285,4 @@ public class CaseService {
 
 
     }
-
 }

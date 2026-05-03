@@ -66,5 +66,4 @@ public class FileController {
     public ResponseEntity<CustomSliceDto<FileErrorInlineDto>> getErrorsForFile(@PathVariable String fileNumber, Pageable pageable){
         return ResponseEntity.ok(new CustomSliceDto<>(fileService.getErrorsForFile(fileNumber, pageable)));
     }
-
 }
