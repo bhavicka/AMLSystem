@@ -14,6 +14,7 @@ import com.tss.AmlSystem.strategy.batch.header.FileHeaderValidator;
 import com.tss.AmlSystem.factory.FileHeaderValidatorFactory;
 import com.tss.AmlSystem.strategy.batch.joblaunch.FileJobLauncher;
 import com.tss.AmlSystem.factory.FileJobLauncherFactory;
+import com.tss.AmlSystem.utils.GlobalConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -129,7 +130,7 @@ public class FileUploadService {
     }
 
     private String calculateFileHash(MultipartFile file) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        MessageDigest digest = MessageDigest.getInstance(GlobalConstants.HASH_ALGORITHM_SHA256);
         byte[] hashBytes = digest.digest(file.getBytes());
 
         // Convert bytes to hex string

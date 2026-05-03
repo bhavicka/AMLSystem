@@ -22,6 +22,7 @@ import com.tss.AmlSystem.repository.TenantUserRepository;
 import com.tss.AmlSystem.security.JwtUtils;
 import com.tss.AmlSystem.security.RefreshTokenService;
 import com.tss.AmlSystem.security.UserDetailsImpl;
+import com.tss.AmlSystem.utils.GlobalConstants;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -234,10 +235,9 @@ public class AuthService {
                 });
     }
     private String generateSecurePassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
         SecureRandom random = new SecureRandom();
-        return IntStream.range(0, 12)
-                .map(i -> chars.charAt(random.nextInt(chars.length())))
+        return IntStream.range(0, GlobalConstants.SECURE_PASSWORD_LENGTH)
+                .map(i -> GlobalConstants.PASSWORD_CHAR_SET.charAt(random.nextInt(GlobalConstants.PASSWORD_CHAR_SET.length())))
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }
