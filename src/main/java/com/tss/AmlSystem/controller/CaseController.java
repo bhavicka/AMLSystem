@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -36,12 +37,13 @@ public class CaseController {
     @GetMapping("/cases")
     @PreAuthorize("hasAuthority('BANK_ADMIN') or hasAuthority('COMPLIANCE_OFFICER')")
     public ResponseEntity<CustomSliceDto<CaseDashboardDto>> getAllCases(
-            @RequestParam(required = false) CaseStatus caseStatus,
+            @RequestParam(required = false) String caseStatus,
             @RequestParam(required = false) String assignedToEmail,
             @RequestParam(required = false) String caseReferenceNumber,
-            @PageableDefault() Pageable pageable
+            @PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable
     ){
-        return ResponseEntity.ok(new CustomSliceDto<>(caseService.getAllCases(assignedToEmail,caseStatus,caseReferenceNumber,pageable)));
+        CaseStatus status = caseStatus==null?null:CaseStatus.valueOf(caseStatus.toUpperCase(Locale.ROOT));
+        return ResponseEntity.ok(new CustomSliceDto<>(caseService.getAllCases(assignedToEmail,status,caseReferenceNumber,pageable)));
     }
 
     @GetMapping("/cases/{caseReferenceNumber}")

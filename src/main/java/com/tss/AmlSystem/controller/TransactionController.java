@@ -28,7 +28,7 @@ public class TransactionController {
     @GetMapping(value = "/customers/{customerNumber}/transactions/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> downloadTransactionPdf(@PathVariable String customerNumber) {
         List<Transaction> transactionList = transactionService.generateTransactionHistoryPdf(customerNumber);
-        byte[] pdfBytes = pdfGenerationService.generateTransactionReport(transactionList);
+        byte[] pdfBytes = pdfGenerationService.generateTransactionReport(transactionList, customerNumber);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDispositionFormData("attachment", "transactions_" + customerNumber + ".pdf");

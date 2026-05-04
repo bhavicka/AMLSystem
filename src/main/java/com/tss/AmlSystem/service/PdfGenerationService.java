@@ -14,7 +14,6 @@ import com.tss.AmlSystem.dto.pdf.StrReportDto;
 import com.tss.AmlSystem.dto.pdf.StrTransactionDto;
 import com.tss.AmlSystem.entity.tenant.Transaction;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.lowagie.text.PageSize;
 import org.thymeleaf.TemplateEngine;
@@ -29,7 +28,8 @@ public class PdfGenerationService {
 
     private final TemplateEngine templateEngine;
 
-    public byte[] generateTransactionReport(List<Transaction> transactions) {
+
+    public byte[] generateTransactionReport(List<Transaction> transactions, String customerNumber) {
         // 1. Create a stream to hold the PDF data
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -42,7 +42,7 @@ public class PdfGenerationService {
 
         // 4. Add a Title
         Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Paragraph title = new Paragraph("Customer Transaction Report", titleFont);
+        Paragraph title = new Paragraph("Customer Transaction Report For Customer: " + customerNumber, titleFont);
         title.setSpacingAfter(20);
         document.add(title);
 
@@ -51,7 +51,11 @@ public class PdfGenerationService {
         table.setWidthPercentage(100);
 
         float[] columnWidths = {1.4f, 3.2f, 1.8f, 2.0f, 1.2f, 0.8f, 1.6f};
-        table.setWidths(columnWidths);
+        try {
+            table.setWidths(columnWidths);
+        } catch (Exception e) {
+            // Should not happen with hardcoded widths
+        }
 
         table.getDefaultCell().setPaddingTop(8f);
         table.getDefaultCell().setPaddingBottom(8f);

@@ -62,15 +62,18 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final TenantUserRepository tenantUserRepository;
 
-    public String registerBank(BankRegisterDto bankRegisterDto){
+    public String registerBank(BankRegisterDto bankRegisterDto) {
         log.info("{} Attempting to register new bank: {}", LogTag.TENANT.getValue(), bankRegisterDto.bankName());
         userCredentialRepository.findByEmail(bankRegisterDto.bankAdminEmail()).ifPresent(user -> {
-            log.warn("{} {} Email already in use during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.bankAdminEmail());
+            log.warn("{} {} Email already in use during bank registration: {}", LogTag.TENANT.getValue(),
+                    LogTag.SECURITY.getValue(), bankRegisterDto.bankAdminEmail());
             throw new DuplicateResourceException("Email is already in use: " + bankRegisterDto.bankAdminEmail());
         });
         tenantRepository.findByContactEmail(bankRegisterDto.contactEmail()).ifPresent(tenant -> {
-            log.warn("{} {} Contact email already associated with another tenant during bank registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.contactEmail());
-            throw new DuplicateResourceException("Contact email is already associated with another tenant: " + bankRegisterDto.contactEmail());
+            log.warn("{} {} Contact email already associated with another tenant during bank registration: {}",
+                    LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), bankRegisterDto.contactEmail());
+            throw new DuplicateResourceException(
+                    "Contact email is already associated with another tenant: " + bankRegisterDto.contactEmail());
         });
         Tenant tenant = tenantMapper.toTenant(bankRegisterDto);
         String schemaName = tenant.getBankName().replaceAll("\\s+", "_").toLowerCase() + "_schema";
@@ -86,33 +89,35 @@ public class AuthService {
 
         tenantSchemaService.createSchema(tenant.getSchemaName());
         TenantContext.setCurrentTenant(tenant.getSchemaName());
-        try{
+        try {
             tenantSchemaService.populateTenantSchema(bankRegisterDto, userCredential);
-        }finally {
+        } finally {
             TenantContext.clear();
         }
         eventPublisher.publishEvent(
                 new UserRegisteredEvent(
                         userCredential.getEmail(),
                         bankRegisterDto.firstName() + " " + bankRegisterDto.lastName(),
-                        password
-                )
-        );
+                        password));
         log.info("{} Bank registered successfully with schema: {}", LogTag.TENANT.getValue(), schemaName);
         return "Tenant created";
     }
 
-    public ComplianceOfficerRegisteredDto registerComplianceOfficer(ComplianceOfficerRegisterDto complianceOfficerRegisterDto) {
+    public ComplianceOfficerRegisteredDto registerComplianceOfficer(
+            ComplianceOfficerRegisterDto complianceOfficerRegisterDto) {
         String currentTenant = TenantContext.getCurrentTenant();
-        log.info("{} Attempting to register Compliance Officer for tenant schema: {}", LogTag.TENANT.getValue(), currentTenant);
-        if(currentTenant == null) {
-            log.error("{} {} Missing tenant context during compliance officer registration.", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue());
+        log.info("{} Attempting to register Compliance Officer for tenant schema: {}", LogTag.TENANT.getValue(),
+                currentTenant);
+        if (currentTenant == null) {
+            log.error("{} {} Missing tenant context during compliance officer registration.", LogTag.TENANT.getValue(),
+                    LogTag.SECURITY.getValue());
             throw new RuntimeException("No tenant context found");
         }
         String password = generateSecurePassword();
 
         userCredentialRepository.findByEmail(complianceOfficerRegisterDto.email()).ifPresent(user -> {
-            log.warn("{} {} Email already in use during compliance officer registration: {}", LogTag.TENANT.getValue(), LogTag.SECURITY.getValue(), complianceOfficerRegisterDto.email());
+            log.warn("{} {} Email already in use during compliance officer registration: {}", LogTag.TENANT.getValue(),
+                    LogTag.SECURITY.getValue(), complianceOfficerRegisterDto.email());
             throw new DuplicateResourceException("Email is already in use: " + complianceOfficerRegisterDto.email());
         });
 
@@ -131,22 +136,19 @@ public class AuthService {
                 new UserRegisteredEvent(
                         userCredential.getEmail(),
                         complianceOfficerRegisterDto.firstName() + " " + complianceOfficerRegisterDto.lastName(),
-                        password
-                )
-        );
-        log.info("{} Compliance Officer registered successfully: {}", LogTag.TENANT.getValue(), userCredential.getEmail());
+                        password));
+        log.info("{} Compliance Officer registered successfully: {}", LogTag.TENANT.getValue(),
+                userCredential.getEmail());
         return new ComplianceOfficerRegisteredDto(
                 userCredential.getEmail(),
                 tenantUser.getEmployeeCode(),
-                tenantUser.getRole().toString()
-        );
+                tenantUser.getRole().toString());
     }
 
     public LoginResponseDto login(LoginRequest loginRequest) {
         log.info("{} Login attempt for user: {}", LogTag.AUTH.getValue(), loginRequest.email());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
-        );
+                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         assert userDetails != null;
@@ -160,14 +162,13 @@ public class AuthService {
                 userDetails.getEmail(),
                 userDetails.getBankName(),
                 userDetails.getSchemaName(),
-                userDetails.getRoles()
-        );
+                userDetails.getRoles());
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
         TenantUser tenantUser = null;
-        if(!roles.get(0).equals(GlobalUserRole.SYSTEM_ADMIN.toString())) {
+        if (!roles.get(0).equals(GlobalUserRole.SYSTEM_ADMIN.toString())) {
             String schemaName = userDetails.getSchemaName();
             TenantContext.clear();
             TenantContext.setCurrentTenant(schemaName);
@@ -180,43 +181,62 @@ public class AuthService {
                 userDetails.getEmail(),
                 userDetails.getBankName(),
                 roles,
-                (tenantUser==null)? "System ": tenantUser.getFirstName(),
-                (tenantUser==null)? "Admin": tenantUser.getLastName(),
-                (tenantUser==null)? Boolean.FALSE: user.getIsFirstLogin()
-        );
+                (tenantUser == null) ? "System " : tenantUser.getFirstName(),
+                (tenantUser == null) ? "Admin" : tenantUser.getLastName(),
+                (tenantUser == null) ? Boolean.FALSE : user.getIsFirstLogin());
     }
+
     @Transactional
-    public Boolean updatePassword(PasswordChangeRequestDto passwordChangeRequestDto){
+    public Boolean updatePassword(PasswordChangeRequestDto passwordChangeRequestDto) {
         log.info("{} Password update requested for: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
         UserCredential userCredential = userCredentialRepository.findByEmail(passwordChangeRequestDto.email())
                 .orElseThrow(() -> {
-                    log.warn("{} User not found for password update: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
-                    return new ResourceNotFoundException("User not found with email: " + passwordChangeRequestDto.email());
+                    log.warn("{} User not found for password update: {}", LogTag.AUTH.getValue(),
+                            passwordChangeRequestDto.email());
+                    return new ResourceNotFoundException(
+                            "User not found with email: " + passwordChangeRequestDto.email());
                 });
-        if(userCredential.getIsFirstLogin()){
+        if (!passwordEncoder.matches(passwordChangeRequestDto.oldPassword(), userCredential.getPasswordHash())) {
+            log.warn("{} Incorrect old password provided for: {}", LogTag.AUTH.getValue(),
+                    passwordChangeRequestDto.email());
+            throw new BusinessValidationException("Incorrect old password");
+        }
+        if (userCredential.getIsFirstLogin()) {
             userCredential.setPasswordHash(passwordEncoder.encode(passwordChangeRequestDto.newPassword()));
             userCredential.setIsFirstLogin(false);
-            log.info("{} Password successfully updated for: {}", LogTag.AUTH.getValue(), passwordChangeRequestDto.email());
+            log.info("{} Password successfully updated for: {}", LogTag.AUTH.getValue(),
+                    passwordChangeRequestDto.email());
         }
         return true;
     }
+
+    @Transactional
     public LoginResponseDto refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.refreshToken();
-        log.info("{} Refresh token process started", LogTag.AUTH.getValue());
+        log.info("{} Refresh token process started for token: {}", LogTag.AUTH.getValue(), requestRefreshToken);
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(user -> {
+                    log.info("{} Token verified for user: {}", LogTag.AUTH.getValue(), user.getEmail());
                     // Generate new JWT
                     String token = jwtUtils.generateJwtToken(
                             user.getEmail(),
                             user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
                             user.getTenant() != null ? user.getTenant().getSchemaName() : "public",
-                            List.of(user.getRole().name())
-                    );
+                            List.of(user.getRole().name()));
 
                     log.info("{} Refresh token successful for: {}", LogTag.AUTH.getValue(), user.getEmail());
-                    TenantUser tenantUser = tenantUserRepository.findByEmail(user.getEmail()).orElseThrow();
+
+                    TenantUser tenantUser = null;
+                    if (user.getRole() != GlobalUserRole.SYSTEM_ADMIN) {
+                        String schemaName = user.getTenant() != null ? user.getTenant().getSchemaName() : "public";
+                        TenantContext.clear();
+                        TenantContext.setCurrentTenant(schemaName);
+                        tenantUser = tenantUserRepository.findByEmail(user.getEmail()).orElseThrow(() -> 
+                            new ResourceNotFoundException("Tenant user not found for email: " + user.getEmail()));
+                    }
+
                     return new LoginResponseDto(
                             token,
                             "Bearer",
@@ -224,20 +244,22 @@ public class AuthService {
                             user.getEmail(),
                             user.getTenant() != null ? user.getTenant().getBankName() : "SYSTEM",
                             List.of(user.getRole().name()),
-                            tenantUser.getFirstName(),
-                            tenantUser.getLastName(),
-                            tenantUser.getSystemUser().getIsFirstLogin()
-                    );
+                            (tenantUser == null) ? "System " : tenantUser.getFirstName(),
+                            (tenantUser == null) ? "Admin" : tenantUser.getLastName(),
+                            (tenantUser == null) ? Boolean.FALSE : user.getIsFirstLogin());
                 })
                 .orElseThrow(() -> {
-                    log.error("{} {} Invalid or missing refresh token", LogTag.AUTH.getValue(), LogTag.SECURITY.getValue());
-                    return new RuntimeException("Refresh token is not in database!");
+                    log.error("{} {} Invalid or missing refresh token in database: {}", LogTag.AUTH.getValue(),
+                            LogTag.SECURITY.getValue(), requestRefreshToken);
+                    return new BusinessValidationException("Refresh token is invalid or has been revoked");
                 });
     }
+
     private String generateSecurePassword() {
         SecureRandom random = new SecureRandom();
         return IntStream.range(0, GlobalConstants.SECURE_PASSWORD_LENGTH)
-                .map(i -> GlobalConstants.PASSWORD_CHAR_SET.charAt(random.nextInt(GlobalConstants.PASSWORD_CHAR_SET.length())))
+                .map(i -> GlobalConstants.PASSWORD_CHAR_SET
+                        .charAt(random.nextInt(GlobalConstants.PASSWORD_CHAR_SET.length())))
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }

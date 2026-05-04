@@ -103,11 +103,10 @@ public class CaseService {
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         String targetEmailToFilter;
-        if(isAdmin){
-            targetEmailToFilter=requestedEmail;
-        }
-        else{
-            targetEmailToFilter=currentUserEmail;
+        if (isAdmin) {
+            targetEmailToFilter = (requestedEmail != null && !requestedEmail.trim().isEmpty()) ? requestedEmail : null;
+        } else {
+            targetEmailToFilter = currentUserEmail;
         }
         return caseRepository.searchCases(targetEmailToFilter,caseReferenceNumber,caseStatus,pageable)
                 .map(caseMapper::toResponseDto);
