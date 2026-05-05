@@ -195,7 +195,6 @@ public class CaseService {
         strFilling.setSupportingNotes(caseEscalateDto.getNotes());
         String strReferenceNumber = generateIdentifierNumber("STR");
         strFilling.setReferenceNumber(strReferenceNumber);
-//        strFilingRepository.save(strFilling);
 
         //report details
         StrReportDto strReportDto = new StrReportDto(
@@ -249,29 +248,23 @@ public class CaseService {
             );
             strTransactionDtoList.add(strTransactionDto);
         }
-        // 1. Generate the PDF as a byte array
+
         byte[] pdfBytes = pdfGenerationService.generateStrReportPdf(strReportDto, strCustomerDto, strAlertDtoList, strTransactionDtoList);
 
-        // 2. Upload to Cloudinary
+
         try {
-            // Generate a unique file name
             String fileName = "str_report_" + case_.getCaseReferenceNumber() + "_" + System.currentTimeMillis() + ".pdf";
 
             Map<String, Object> uploadOptions = ObjectUtils.asMap(
                     "resource_type", "raw",
-                    "public_id", fileName // Force Cloudinary to save it with a .pdf extension
+                    "public_id", fileName
             );
 
             Map uploadResult = cloudinary.uploader().upload(pdfBytes, uploadOptions);
 
-            // 3. Get the web link
             String pdfUrl = (String) uploadResult.get("secure_url");
-            System.out.println(pdfUrl);
-            // 4. Save the link to your DB (assuming your StrFilling entity has a setPdfLink method)
-            strFilling.setPdfStoragePath(pdfUrl); // Make sure you have a field in StrFilling to store this!
+            strFilling.setPdfStoragePath(pdfUrl);
             strFilingRepository.save(strFilling);
-
-            // 5. Return the byte[] to keep your method signature happy (or change your method to return a String URL instead)
 
             applicationEventPublisher.publishEvent(new CaseEscalatedEvent(
                     assignedBy.getEmail(), assignedBy.getFirstName()+" "+assignedBy.getLastName(), case_.getCaseReferenceNumber()

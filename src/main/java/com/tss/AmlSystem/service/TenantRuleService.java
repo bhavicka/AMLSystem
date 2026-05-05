@@ -72,10 +72,9 @@ public class TenantRuleService {
                 if (revoked) {
                     tenantRuleAssignment.setRevokedAt(LocalDateTime.now());
                 } else {
-                    tenantRuleAssignment.setRevokedAt(null); // Good practice to clear if un-revoked
+                    tenantRuleAssignment.setRevokedAt(null);
                 }
 
-                // 4. Save (JPA will now perform an UPDATE if the ID is present)
                 tenantRuleAssignmentRepository.save(tenantRuleAssignment);
 
             }

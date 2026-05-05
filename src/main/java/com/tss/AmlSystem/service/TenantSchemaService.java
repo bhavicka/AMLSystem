@@ -36,7 +36,7 @@ public class TenantSchemaService {
         Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(name)
-                .createSchemas(true) // Crucial: tells Flyway to create the schema folder
+                .createSchemas(true)
                 .locations("classpath:db/migration/tenant")
                 .load()
                 .migrate();
