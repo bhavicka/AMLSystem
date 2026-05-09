@@ -17,7 +17,7 @@ A comprehensive Multi-Tenant Anti-Money Laundering (AML) system designed for fin
 - **Framework:** Angular 19.2
 - **Language:** TypeScript
 - **State Management:** RxJS
-- **Styling:** Vanilla CSS / Component-based styling
+- **Styling:** Bootstrap / Component-based styling
 - **Architecture:** Modular (Core, Layout, Features)
 
 ---
