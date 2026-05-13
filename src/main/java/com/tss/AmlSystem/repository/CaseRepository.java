@@ -31,8 +31,8 @@ public interface CaseRepository extends JpaRepository<Case,Long> {
     SELECT c FROM Case c
     LEFT JOIN FETCH c.assignedTo a
     WHERE c.status = COALESCE(:caseStatus, c.status)
-      AND (a.email = :assignedToEmail OR :assignedToEmail = '' OR :assignedToEmail IS NULL)
-      AND (LOWER(c.caseReferenceNumber) LIKE LOWER(CONCAT(:caseReferenceNumber, '%')) OR :caseReferenceNumber = '' OR :caseReferenceNumber IS NULL)
+      AND (:assignedToEmail IS NULL OR :assignedToEmail = '' OR a.email = :assignedToEmail)
+      AND (:caseReferenceNumber IS NULL OR :caseReferenceNumber = '' OR LOWER(c.caseReferenceNumber) LIKE LOWER(CONCAT(:caseReferenceNumber, '%')))
 """)
     Slice<Case> searchCases(
             @Param("assignedToEmail") String assignedToEmail,

@@ -4,6 +4,8 @@ import com.tss.AmlSystem.config.multitenancy.TenantContext;
 import com.tss.AmlSystem.dto.response.FileUploadProcessDto;
 import com.tss.AmlSystem.entity.enums.tenant.FileStatus;
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.DuplicateResourceException;
 import com.tss.AmlSystem.entity.tenant.File;
 import com.tss.AmlSystem.entity.tenant.TenantUser;
 import com.tss.AmlSystem.repository.FileRepository;
@@ -12,6 +14,7 @@ import com.tss.AmlSystem.strategy.batch.header.FileHeaderValidator;
 import com.tss.AmlSystem.factory.FileHeaderValidatorFactory;
 import com.tss.AmlSystem.strategy.batch.joblaunch.FileJobLauncher;
 import com.tss.AmlSystem.factory.FileJobLauncherFactory;
+import com.tss.AmlSystem.utils.GlobalConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -52,7 +55,7 @@ public class FileUploadService {
         String fileHash = calculateFileHash(multipartFile);
         fileRepository.findByFileHash(fileHash).ifPresent(existingFile -> {
             log.error("{} {} Duplicate file upload detected. FileHash: {}, Tenant: {}", LogTag.BATCH.getValue(), LogTag.SECURITY.getValue(), fileHash, tenant);
-            throw new RuntimeException("Duplicate file upload detected: " + existingFile.getFileName());
+            throw new DuplicateResourceException("Duplicate file upload detected: " + existingFile.getFileName());
         });
 
         Path storedFilePath = storeFile(multipartFile, fileType);
@@ -127,7 +130,7 @@ public class FileUploadService {
     }
 
     private String calculateFileHash(MultipartFile file) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        MessageDigest digest = MessageDigest.getInstance(GlobalConstants.HASH_ALGORITHM_SHA256);
         byte[] hashBytes = digest.digest(file.getBytes());
 
         // Convert bytes to hex string

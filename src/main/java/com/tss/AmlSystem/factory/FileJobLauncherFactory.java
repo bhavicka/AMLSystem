@@ -1,6 +1,7 @@
 package com.tss.AmlSystem.factory;
 
 import com.tss.AmlSystem.entity.enums.tenant.FileType;
+import com.tss.AmlSystem.exception.BusinessValidationException;
 import com.tss.AmlSystem.strategy.batch.joblaunch.FileJobLauncher;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,7 @@ public class FileJobLauncherFactory {
     public FileJobLauncher getLauncher(FileType fileType) {
         FileJobLauncher launcher = launcherMap.get(fileType);
         if (launcher == null) {
-            throw new IllegalArgumentException("No launcher found for fileType: " + fileType);
+            throw new BusinessValidationException("No launcher found for fileType: " + fileType);
         }
         return launcher;
     }
