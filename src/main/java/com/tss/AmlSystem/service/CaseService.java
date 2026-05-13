@@ -14,6 +14,9 @@ import com.tss.AmlSystem.dto.response.CaseDashboardDto;
 import com.tss.AmlSystem.dto.response.CaseDetailDto;
 import com.tss.AmlSystem.entity.enums.tenant.AlertStatus;
 import com.tss.AmlSystem.entity.enums.tenant.CaseStatus;
+import com.tss.AmlSystem.exception.BusinessValidationException;
+import com.tss.AmlSystem.exception.ResourceNotFoundException;
+import com.tss.AmlSystem.exception.UnauthorizedAccessException;
 import com.tss.AmlSystem.entity.tenant.*;
 import com.tss.AmlSystem.mapper.AlertMapper;
 import com.tss.AmlSystem.mapper.CaseMapper;
@@ -58,12 +61,12 @@ public class CaseService {
     @Transactional
     public void createCase(List<String> alertNumbers,String officerEmail){
         TenantUser officer=tenantUserRepository.findByEmail(officerEmail)
-                .orElseThrow(()->new RuntimeException("User not found with email: "+officerEmail));
+                .orElseThrow(()->new ResourceNotFoundException("User not found with email: "+officerEmail));
 
         String currentUserEmail=  SecurityContextHolder.getContext().getAuthentication().getName();
 
         TenantUser bankAdmin=tenantUserRepository.findByEmail(currentUserEmail)
-                .orElseThrow(()->new RuntimeException("User not found with email: "+currentUserEmail));
+                .orElseThrow(()->new ResourceNotFoundException("User not found with email: "+currentUserEmail));
 
         Case newCase=new Case();
         newCase.setAssignedTo(officer);
@@ -76,12 +79,12 @@ public class CaseService {
         String clientNumber = null;
         for(String alertNumber:alertNumbers){
             Alert alert=alertRepository.findByAlertNumber(alertNumber)
-                    .orElseThrow(()->new RuntimeException("Alert not found with alert number: "+alertNumber));
+                    .orElseThrow(()->new ResourceNotFoundException("Alert not found with alert number: "+alertNumber));
             if(clientNumber == null){
                 clientNumber = alert.getClientNumber();
             }
             if(!clientNumber.equalsIgnoreCase(alert.getClientNumber())){
-                throw new RuntimeException("Can't select alerts belonging to different customers.");
+                throw new BusinessValidationException("Can't select alerts belonging to different customers.");
             }
             alert.setCaseId(newCase);
             alert.setStatus(AlertStatus.CONVERTED_TO_CASE);
@@ -100,11 +103,10 @@ public class CaseService {
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         String targetEmailToFilter;
-        if(isAdmin){
-            targetEmailToFilter=requestedEmail;
-        }
-        else{
-            targetEmailToFilter=currentUserEmail;
+        if (isAdmin) {
+            targetEmailToFilter = (requestedEmail != null && !requestedEmail.trim().isEmpty()) ? requestedEmail : null;
+        } else {
+            targetEmailToFilter = currentUserEmail;
         }
         return caseRepository.searchCases(targetEmailToFilter,caseReferenceNumber,caseStatus,pageable)
                 .map(caseMapper::toResponseDto);
@@ -113,7 +115,7 @@ public class CaseService {
     @Transactional(readOnly = true)
     public CaseDetailDto getCaseDetail(String caseReferenceNumber){
         Case c=caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
-                .orElseThrow(()->new RuntimeException("Case not found with reference number: "+caseReferenceNumber));
+                .orElseThrow(()->new ResourceNotFoundException("Case not found with reference number: "+caseReferenceNumber));
 
         Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
         String currentUserEmail=  authentication.getName();
@@ -124,7 +126,7 @@ public class CaseService {
                 .anyMatch(a->a.getAuthority().equals("BANK_ADMIN"));
 
         if(!isAdmin && !c.getAssignedTo().getEmail().equalsIgnoreCase(currentUserEmail)){
-            throw new RuntimeException("You are not authorized to view cases assigned to another officer.");
+            throw new UnauthorizedAccessException("You are not authorized to view cases assigned to another officer.");
         }
 
         CaseDetailDto dto=caseMapper.toDetailResponseDto(c);
@@ -143,9 +145,9 @@ public class CaseService {
     @Transactional
     public CaseDetailDto dismissCase(CaseEscalateDto caseEscalateDto){
         Case case_ = caseRepository.findByCaseReferenceNumber(caseEscalateDto.getCaseReferenceNumber())
-                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with reference number: " + caseEscalateDto.getCaseReferenceNumber()));
         if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
-            throw new RuntimeException("can only dismiss OPEN case");
+            throw new BusinessValidationException("can only dismiss OPEN case");
         }
         case_.setStatus(CaseStatus.CLOSED);
         case_.setNotes(caseEscalateDto.getNotes());
@@ -172,14 +174,14 @@ public class CaseService {
     public String escalateCase(CaseEscalateDto caseEscalateDto){
         String caseReferenceNumber = caseEscalateDto.getCaseReferenceNumber();
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        TenantUser tenantUser = tenantUserRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         Case case_ = caseRepository.findByCaseReferenceNumber(caseReferenceNumber)
-                .orElseThrow(() -> new RuntimeException("Case not found with reference number: " + caseReferenceNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Case not found with reference number: " + caseReferenceNumber));
         if(!case_.getAssignedTo().getEmail().equalsIgnoreCase(email)){
-            throw new RuntimeException("You are not authorized to escalate cases assigned to another officer.");
+            throw new UnauthorizedAccessException("You are not authorized to escalate cases assigned to another officer.");
         }
         if (!case_.getStatus().equals(CaseStatus.UNDER_INVESTIGATION)) {
-            throw new RuntimeException("can only escalate OPEN case");
+            throw new BusinessValidationException("can only escalate OPEN case");
         }
         case_.setStatus(CaseStatus.ESCALATED);
         caseRepository.save(case_);
@@ -193,7 +195,6 @@ public class CaseService {
         strFilling.setSupportingNotes(caseEscalateDto.getNotes());
         String strReferenceNumber = generateIdentifierNumber("STR");
         strFilling.setReferenceNumber(strReferenceNumber);
-//        strFilingRepository.save(strFilling);
 
         //report details
         StrReportDto strReportDto = new StrReportDto(
@@ -217,7 +218,7 @@ public class CaseService {
         }
 
         Customer customer = customerRepository.findByClientNumber(alertList.get(0).getClientNumber())
-                .orElseThrow(() -> new RuntimeException("Customer not found with client number: " + alertList.get(0).getClientNumber()));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with client number: " + alertList.get(0).getClientNumber()));
 
         //customer details
         StrCustomerDto strCustomerDto = new StrCustomerDto(
@@ -247,29 +248,23 @@ public class CaseService {
             );
             strTransactionDtoList.add(strTransactionDto);
         }
-        // 1. Generate the PDF as a byte array
+
         byte[] pdfBytes = pdfGenerationService.generateStrReportPdf(strReportDto, strCustomerDto, strAlertDtoList, strTransactionDtoList);
 
-        // 2. Upload to Cloudinary
+
         try {
-            // Generate a unique file name
             String fileName = "str_report_" + case_.getCaseReferenceNumber() + "_" + System.currentTimeMillis() + ".pdf";
 
             Map<String, Object> uploadOptions = ObjectUtils.asMap(
                     "resource_type", "raw",
-                    "public_id", fileName // Force Cloudinary to save it with a .pdf extension
+                    "public_id", fileName
             );
 
             Map uploadResult = cloudinary.uploader().upload(pdfBytes, uploadOptions);
 
-            // 3. Get the web link
             String pdfUrl = (String) uploadResult.get("secure_url");
-            System.out.println(pdfUrl);
-            // 4. Save the link to your DB (assuming your StrFilling entity has a setPdfLink method)
-            strFilling.setPdfStoragePath(pdfUrl); // Make sure you have a field in StrFilling to store this!
+            strFilling.setPdfStoragePath(pdfUrl);
             strFilingRepository.save(strFilling);
-
-            // 5. Return the byte[] to keep your method signature happy (or change your method to return a String URL instead)
 
             applicationEventPublisher.publishEvent(new CaseEscalatedEvent(
                     assignedBy.getEmail(), assignedBy.getFirstName()+" "+assignedBy.getLastName(), case_.getCaseReferenceNumber()
@@ -283,5 +278,4 @@ public class CaseService {
 
 
     }
-
 }

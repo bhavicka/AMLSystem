@@ -1,5 +1,6 @@
 package com.tss.AmlSystem.security;
 
+import com.tss.AmlSystem.utils.GlobalConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(java.util.List.of("http://localhost:4200")); // Typical Angular dev port
+        configuration.setAllowedOrigins(java.util.List.of(GlobalConstants.ALLOWED_ORIGIN_DEV)); // Typical Angular dev port
         configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "X-Tenant-Id"));
         configuration.setExposedHeaders(java.util.List.of("Authorization"));
